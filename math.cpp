@@ -60,6 +60,13 @@ void Translation(MAT* m, float x, float y, float z)
 	m->_43 = z;
 }
 
+void Transform(Vec3* out, const Vec3& v, const MAT& m)
+{
+	out->x = v.x * m._11 + v.y * m._21 + v.z * m._31 + m._41;
+	out->y = v.x * m._12 + v.y * m._22 + v.z * m._32 + m._42;
+	out->z = v.x * m._13 + v.y * m._23 + v.z * m._33 + m._43;
+}
+
 void Multiply(MAT* out, const MAT& m1, const MAT& m2)
 {
 	out->_11 = m1._11 * m2._11 + m1._12 * m2._21 + m1._13 * m2._31 + m1._14 * m2._41;
@@ -99,25 +106,38 @@ void MatrixLookAtLH(MAT* out, const Vec3& eye, const Vec3& at, const Vec3& up)
 	Vec3 upVector;
 	Cross(&upVector, forward, _up);
 
+// 	out->_11 = right.x;
+// 	out->_12 = right.y;
+// 	out->_13 = right.z;
+// 	out->_21 = up.x;
+// 	out->_22 = up.y;
+// 	out->_23 = up.z;
+// 	out->_31 = forward.x;
+// 	out->_32 = forward.y;
+// 	out->_33 = forward.z;
+// 	out->_41 = eye.x;
+// 	out->_42 = eye.y;
+// 	out->_43 = eye.z;
+
 	out->_11 = right.x;
-	out->_11 = right.y;
-	out->_13 = right.z;
-	out->_21 = up.x;
+	out->_21 = right.y;
+	out->_31 = right.z;
+	out->_12 = up.x;
 	out->_22 = up.y;
-	out->_23 = up.z;
-	out->_31 = forward.x;
-	out->_32 = forward.y;
+	out->_32 = up.z;
+	out->_13 = forward.x;
+	out->_23 = forward.y;
 	out->_33 = forward.z;
-	out->_41 = eye.x;
-	out->_42 = eye.y;
-	out->_43 = eye.z;
+	out->_14 = eye.x;
+	out->_24 = eye.y;
+	out->_34 = eye.z;
+
 }
 
 // perspective
 void MatrixPerspectiveFovLH(MAT* out, float fovY, float aspect, float zn, float zf)
 {
 	float tanfov = (float)tan(fovY * 0.5f);
-
 	out->_11 = (1.0f / tanfov) / aspect;
 	out->_12 = 0.0f;
 	out->_13 = 0.0f;
@@ -137,5 +157,39 @@ void MatrixPerspectiveFovLH(MAT* out, float fovY, float aspect, float zn, float 
 	out->_42 = 0.0f;
 	out->_43 = -zn * zf / (zf - zn);
 	out->_44 = 0.0f;
-
 }
+
+void MatrixPerspectiveFovRH(MAT* out, float fovY, float aspect, float zn, float zf)
+{
+// 	float tanfov = (float)tan(fovY * 0.5f);
+// 
+// 	out->_00 = (1.0f / tanfov) / aspect;
+// 	out->_01 = 0.0f;
+// 	out->_02 = 0.0f;
+// 	out->_03 = 0.0f;
+// 
+// 	out->_10 = 0.0f;
+// 	out->_11 = (1.0f / tanfov);
+// 	out->_12 = 0.0f;
+// 	out->_13 = 0.0f;
+// 
+// 	out->_20 = 0.0f;
+// 	out->_21 = 0.0f;
+// 	out->_22 = zf / (zf - zn);
+// 	out->_23 = -zn * zf / (zf - zn);
+// 
+// 	out->_30 = 0.0f;
+// 	out->_31 = 0.0f;
+// 	out->_32 = 1.0f;
+// 	out->_33 = 0.0f;
+}
+
+
+void MatrixSetViewPort(MAT* out, float x, float y, float w, float h)
+{
+	out->_11 = w * 0.5f;
+	out->_41 = x + w * 0.5f;
+	out->_22 = -h * 0.5f;
+	out->_42 = y + h * 0.5f;
+}
+
