@@ -16,13 +16,13 @@
 
 
 
-#define NUMOFSTARS	2
+#define NUMOFSTARS	300
 
 ////////////////////////////////////////////////////////////////////////////////////
 
 unsigned int* screenbuffer = nullptr;
 float aspect = (float)SCREEN_XSIZE / (float)SCREEN_YSIZE;
-float fov = 45.f * _DEGREE;
+float fov = 45.f ;
 
 MAT camera;
 MAT proj;
@@ -37,17 +37,17 @@ void InitRenderer()
 	Vec3 eye;
 	eye.x = 0;	eye.y = 0;	eye.z = 0;
 	Vec3 at;
-	at.x = 0;	at.y = 0;	at.z = -1;
+	at.x = 0;	at.y = 0;	at.z = 1;
 	Vec3 up;
 	up.x = 0;	up.y = 1;	up.z = 0;
 
 	// Init camera mat
 	Identity(&camera);
-	//MatrixLookAtLH(&camera, eye, at, up);
+	MatrixLookAtLH(&camera, eye, at, up);
 
 	// projection mat
 	Identity(&proj);
-	MatrixPerspectiveFovLH(&proj, fov, aspect, 0.1f, 400);
+	MatrixPerspectiveFovLH(&proj, fov*_DEGREE, aspect, 0.1f, 400);
 
 	Identity(&viewport);
 	MatrixSetViewPort(&viewport, 0, 0, SCREEN_XSIZE, SCREEN_YSIZE);
@@ -67,28 +67,44 @@ void DrawPoint(int x, int y, int color)
 
 ////////////////////////////////////////////////////////////////////////
 
+Vec3 GetNewPos()
+{
+	float range = 20.f;
+	Vec3 pos;
+	pos.x = (rand() % (int)(range * 20) * 0.1f) - range;
+	pos.y = (rand() % (int)(range * 20) * 0.1f) - range;
+	pos.z = (float)(rand() % 100);
+
+	return pos;
+}
+
 void InitStar()
 {
-/*
 	for (int i = 0; i < NUMOFSTARS; i++)
 	{
-		float x = (rand() % 2000 * 0.1f) - 100.f; // +- 0 ~ 99
-		float y = (rand() % 2000 * 0.1f) - 100.f;
-		float z = rand() % 1000 * 0.1f;
+// 		float x = (rand() % 200 * 0.1f) - 10.f; // +- 0 ~ 99
+// 		float y = (rand() % 200 * 0.1f) - 10.f;
+// 		float z = rand() % 100;
+// 
+// 		stars[i].x = x;
+// 		stars[i].y = y;
+// 		stars[i].z = z;
 
-		stars[i].x = x;
-		stars[i].y = y;
-		stars[i].z = z;
+		stars[i] = GetNewPos();
 	}
-*/
 
-	stars[0].x = 0;
-	stars[0].y = 0;
-	stars[0].z = 1;
 
-	stars[1].x = 0;
-	stars[1].y = 2;
-	stars[1].z = 1;
+// 	stars[0].x = 0;
+// 	stars[0].y = 0;
+// 	stars[0].z = 1;
+// 
+// 	stars[1].x = 10;
+// 	stars[1].y = 0;
+// 	stars[1].z = 20;
+// 
+// 	stars[2].x = 0;
+// 	stars[2].y = -1;
+// 	stars[2].z = 20;
 }
 
 void RenderStars()
@@ -96,32 +112,33 @@ void RenderStars()
 
 	for (int i = 0; i < NUMOFSTARS; i++)
 	{
-		Vec3 pos;
+		Vec4 pos;
 
 		MAT cp;
 		Multiply(&cp, camera, proj);
 
 		MAT final;
 		Identity(&final);
-		Multiply(&final, viewport, cp);
+		//Multiply(&final, viewport, cp);
+		//Multiply(&final, viewport, proj);
 
-		Transform(&pos, stars[i], final);
+		Vec4 s;
+		s.x = stars[i].x;
+		s.y = stars[i].y;
+		s.z = stars[i].z;
+		s.w = 1;
 
-		float x, y, z, w, rhw;
+		Transform4(&pos, s, cp);
 
-		x = pos.x * final._11 + pos.y * final._21 + pos.z * final._31 + final._41;
-		y = pos.x * final._12 + pos.y * final._22 + pos.z * final._32 + final._42;
-		z = pos.x * final._13 + pos.y * final._23 + pos.z * final._33 + final._43;
-		w = pos.x * final._14 + pos.y * final._24 + pos.z * final._34 + final._44;
+		Vec3 out;
+		Transform_Homoenize(&out, pos, 0, 0, SCREEN_XSIZE, SCREEN_YSIZE);
 
-		rhw = 1.0f / w;
+		DrawPoint((int)out.x, (int)out.y, 0xFFFFFFFF);
 
-		pos.x = x * rhw;
-		pos.y = y * rhw;
-		pos.z = z * rhw;
-		//pos.rhw = rhw;
+		stars[i].z = stars[i].z - 0.1f;
 
-		DrawPoint((int)pos.x, (int)pos.y, 0xFFFFFFFF);
+		if(stars[i].z < 0)
+			stars[i] = GetNewPos();
 	}
 }
 
@@ -135,7 +152,8 @@ int main(int argc, char* argv[])
 	SDL_Init(SDL_INIT_VIDEO);
 
 	SDL_Window* window = SDL_CreateWindow(AppName,
-		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+		300,300,
+		//SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 		SCREEN_XSIZE, SCREEN_YSIZE, 0);
 		//SDL_WINDOW_RESIZABLE);
 
@@ -158,6 +176,36 @@ int main(int argc, char* argv[])
 		while (SDL_PollEvent(&event))
 		{
 			if (event.type == SDL_QUIT) exit(0);
+
+			switch (event.type) 
+			{
+				case SDL_KEYDOWN:
+					switch (event.key.keysym.sym) 
+					{
+					case SDLK_UP:
+						fov++;
+						Identity(&proj);
+						MatrixPerspectiveFovLH(&proj, fov * _DEGREE, aspect, 0.1f, 400);
+						printf("FOV %f \n", fov);
+						break;
+					case SDLK_DOWN:
+						fov--;
+						Identity(&proj);
+						MatrixPerspectiveFovLH(&proj, fov * _DEGREE, aspect, 0.1f, 400);
+						printf("FOV %f \n", fov);
+
+						break;
+					default:
+						break;
+					}
+					break;
+
+				case SDL_KEYUP:
+					break;
+
+				default:
+					break;
+			}
 		}
 
 // 		for (int y = 0; y < SCREEN_YSIZE; ++y)
