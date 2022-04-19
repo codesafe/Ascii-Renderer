@@ -16,7 +16,8 @@
 
 
 
-#define NUMOFSTARS	300
+#define NUMOFSTARS	3
+#define MAX_Z		100
 
 ////////////////////////////////////////////////////////////////////////////////////
 
@@ -24,7 +25,7 @@ unsigned int* screenbuffer = nullptr;
 float aspect = (float)SCREEN_XSIZE / (float)SCREEN_YSIZE;
 float fov = 45.f ;
 
-MAT camera;
+MAT view;
 MAT proj;
 MAT viewport;	// viwe port
 
@@ -41,20 +42,18 @@ void InitRenderer()
 	Vec3 up;
 	up.x = 0;	up.y = 1;	up.z = 0;
 
-	// Init camera mat
-	Identity(&camera);
-	MatrixLookAtLH(&camera, eye, at, up);
+	// Init view mat
+	Identity(&view);
+	MatrixLookAtLH(&view, eye, at, up);
 
 	// projection mat
 	Identity(&proj);
-	MatrixPerspectiveFovLH(&proj, fov*_DEGREE, aspect, 0.1f, 400);
+	MatrixPerspectiveFovLH(&proj, fov*_DEGREE, aspect, 0.1f, MAX_Z);
 
 	Identity(&viewport);
 	MatrixSetViewPort(&viewport, 0, 0, SCREEN_XSIZE, SCREEN_YSIZE);
-
 	
 	screenbuffer = new unsigned int[SCREEN_XSIZE * SCREEN_YSIZE * 4];
-
 }
 
 void DrawPoint(int x, int y, int color)
@@ -73,38 +72,27 @@ Vec3 GetNewPos()
 	Vec3 pos;
 	pos.x = (rand() % (int)(range * 20) * 0.1f) - range;
 	pos.y = (rand() % (int)(range * 20) * 0.1f) - range;
-	pos.z = (float)(rand() % 100);
+	pos.z = (float)(rand() % MAX_Z);
 
 	return pos;
 }
 
 void InitStar()
 {
-	for (int i = 0; i < NUMOFSTARS; i++)
-	{
-// 		float x = (rand() % 200 * 0.1f) - 10.f; // +- 0 ~ 99
-// 		float y = (rand() % 200 * 0.1f) - 10.f;
-// 		float z = rand() % 100;
-// 
-// 		stars[i].x = x;
-// 		stars[i].y = y;
-// 		stars[i].z = z;
+// 	for (int i = 0; i < NUMOFSTARS; i++)
+// 		stars[i] = GetNewPos();
 
-		stars[i] = GetNewPos();
-	}
+	stars[0].x = 0;
+	stars[0].y = 0;
+	stars[0].z = 1;
 
+	stars[1].x = 10;
+	stars[1].y = 0;
+	stars[1].z = 20;
 
-// 	stars[0].x = 0;
-// 	stars[0].y = 0;
-// 	stars[0].z = 1;
-// 
-// 	stars[1].x = 10;
-// 	stars[1].y = 0;
-// 	stars[1].z = 20;
-// 
-// 	stars[2].x = 0;
-// 	stars[2].y = -1;
-// 	stars[2].z = 20;
+	stars[2].x = 0;
+	stars[2].y = -1;
+	stars[2].z = MAX_Z;
 }
 
 void RenderStars()
@@ -113,29 +101,24 @@ void RenderStars()
 	for (int i = 0; i < NUMOFSTARS; i++)
 	{
 		Vec4 pos;
+		Vec4 s(stars[i].x, stars[i].y, stars[i].z, 1);
 
-		MAT cp;
-		Multiply(&cp, camera, proj);
-
+		MAT vp;
 		MAT final;
-		Identity(&final);
-		//Multiply(&final, viewport, cp);
-		//Multiply(&final, viewport, proj);
-
-		Vec4 s;
-		s.x = stars[i].x;
-		s.y = stars[i].y;
-		s.z = stars[i].z;
-		s.w = 1;
-
-		Transform4(&pos, s, cp);
+		Multiply(&vp, view, proj);
+		Multiply(&final, vp, viewport);
+		Transform4(&pos, s, final);
 
 		Vec3 out;
-		Transform_Homoenize(&out, pos, 0, 0, SCREEN_XSIZE, SCREEN_YSIZE);
+		PerspectiveDivide(&out, pos);
 
-		DrawPoint((int)out.x, (int)out.y, 0xFFFFFFFF);
+		//unsigned char bright = 255 - (unsigned char)( (stars[i].z / (float)MAX_Z) * 255 );
+		unsigned char bright = (unsigned char)(out.z * 255.f);
+		int color = bright << 24 | bright << 16 | bright << 8 | 0xff;
 
-		stars[i].z = stars[i].z - 0.1f;
+		DrawPoint((int)out.x, (int)out.y, color/*0x0000FFFF*/);
+
+//		stars[i].z = stars[i].z - 0.1f;
 
 		if(stars[i].z < 0)
 			stars[i] = GetNewPos();

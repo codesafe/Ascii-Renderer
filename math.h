@@ -7,17 +7,44 @@
 struct Vec3
 {
 	float x, y, z;
+	Vec3()
+	{
+		x = y = z = 0;
+	}
+
+	Vec3(float _x, float _y, float _z)
+	{
+		x = _x;
+		y = _y;
+		z = _z;
+	}
 };
 
 struct Vec4
 {
 	float x, y, z, w;
+	Vec4()
+	{
+		x = y = z = w = 0;
+	}
+
+	Vec4(float _x, float _y, float _z, float _w)
+	{
+		x = _x;
+		y = _y;
+		z = _z;
+		w = _w;
+	}
 };
 
 void Subtract(Vec3* out, const Vec3& v1, const Vec3& v2);
 void Normalize(Vec3* out, const Vec3& v);
 float Dot(const Vec3& v1, const Vec3& v2);
 void Cross(Vec3* out, const Vec3& v1, const Vec3& v2);
+
+
+////////////////////////////////////////////////////////////////////////////////////
+
 
 struct MAT 
 { 
@@ -34,6 +61,7 @@ void MatrixPerspectiveFovLH(MAT* out, float fovY, float aspect, float zn, float 
 void MatrixPerspectiveFovRH(MAT* out, float fovY, float aspect, float zn, float zf);
 
 void MatrixSetViewPort(MAT* out, float x, float y, float w, float h);
-void Transform_Homoenize(Vec3* out, Vec4& in, float x, float y, float w, float h);
+void Transform_Homogenize(Vec3* out, Vec4& in, float x, float y, float w, float h);
+void PerspectiveDivide(Vec3* out, const Vec4 &in);
 
 #endif

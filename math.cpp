@@ -46,33 +46,42 @@ void Translation(MAT* m, float x, float y, float z)
 	m->m[3][2] = z;
 }
 
-void Transform(Vec3* out, const Vec3& v, const MAT& m)
+void Transform(Vec3* out, const Vec3& v, const MAT& mat)
 {
-// 	out->x = v.x * m._11 + v.y * m._21 + v.z * m._31 + m._41;
-// 	out->y = v.x * m._12 + v.y * m._22 + v.z * m._32 + m._42;
-// 	out->z = v.x * m._13 + v.y * m._23 + v.z * m._33 + m._43;
+	out->x = v.x * mat.m[0][0] + v.y * mat.m[1][0] + v.z * mat.m[2][0];
+	out->y = v.x * mat.m[0][1] + v.y * mat.m[1][1] + v.z * mat.m[2][1];
+	out->z = v.x * mat.m[0][2] + v.y * mat.m[1][2] + v.z * mat.m[2][2];
 }
 
 void Transform4(Vec4* out, const Vec4& v, const MAT& mat)
 {
-	float X = v.x, Y = v.y, Z = v.z, W = v.w;
-	out->x = X * mat.m[0][0] + Y * mat.m[1][0] + Z * mat.m[2][0] + W * mat.m[3][0];
-	out->y = X * mat.m[0][1] + Y * mat.m[1][1] + Z * mat.m[2][1] + W * mat.m[3][1];
-	out->z = X * mat.m[0][2] + Y * mat.m[1][2] + Z * mat.m[2][2] + W * mat.m[3][2];
-	out->w = X * mat.m[0][3] + Y * mat.m[1][3] + Z * mat.m[2][3] + W * mat.m[3][3];
+	out->x = v.x * mat.m[0][0] + v.y * mat.m[1][0] + v.z * mat.m[2][0] + v.w * mat.m[3][0];
+	out->y = v.x * mat.m[0][1] + v.y * mat.m[1][1] + v.z * mat.m[2][1] + v.w * mat.m[3][1];
+	out->z = v.x * mat.m[0][2] + v.y * mat.m[1][2] + v.z * mat.m[2][2] + v.w * mat.m[3][2];
+	out->w = v.x * mat.m[0][3] + v.y * mat.m[1][3] + v.z * mat.m[2][3] + v.w * mat.m[3][3];
 }
 
 void Multiply(MAT* out, const MAT& m1, const MAT& m2)
 {
-	for (int i = 0; i < 4; i++) 
-		for (int j = 0; j < 4; j++) 
-		{
-			out->m[j][i] = 
-				(m1.m[j][0] * m2.m[0][i]) +
-				(m1.m[j][1] * m2.m[1][i]) +
-				(m1.m[j][2] * m2.m[2][i]) +
-				(m1.m[j][3] * m2.m[3][i]);
-		}
+	out->m[0][0] = m1.m[0][0] * m2.m[0][0] + m1.m[0][1] * m2.m[1][0] + m1.m[0][2] * m2.m[2][0] + m1.m[0][3] * m2.m[3][0];
+	out->m[0][1] = m1.m[0][0] * m2.m[0][1] + m1.m[0][1] * m2.m[1][1] + m1.m[0][2] * m2.m[2][1] + m1.m[0][3] * m2.m[3][1];
+	out->m[0][2] = m1.m[0][0] * m2.m[0][2] + m1.m[0][1] * m2.m[1][2] + m1.m[0][2] * m2.m[2][2] + m1.m[0][3] * m2.m[3][2];
+	out->m[0][3] = m1.m[0][0] * m2.m[0][2] + m1.m[0][1] * m2.m[1][3] + m1.m[0][2] * m2.m[2][3] + m1.m[0][3] * m2.m[3][3];
+
+	out->m[1][0] = m1.m[1][0] * m2.m[0][0] + m1.m[1][1] * m2.m[1][0] + m1.m[1][2] * m2.m[2][0] + m1.m[1][3] * m2.m[3][0];
+	out->m[1][1] = m1.m[1][0] * m2.m[0][1] + m1.m[1][1] * m2.m[1][1] + m1.m[1][2] * m2.m[2][1] + m1.m[1][3] * m2.m[3][1];
+	out->m[1][2] = m1.m[1][0] * m2.m[0][2] + m1.m[1][1] * m2.m[1][2] + m1.m[1][2] * m2.m[2][2] + m1.m[1][3] * m2.m[3][2];
+	out->m[1][3] = m1.m[1][0] * m2.m[0][2] + m1.m[1][1] * m2.m[1][3] + m1.m[1][2] * m2.m[2][3] + m1.m[1][3] * m2.m[3][3];
+
+	out->m[2][0] = m1.m[2][0] * m2.m[0][0] + m1.m[2][1] * m2.m[1][0] + m1.m[2][2] * m2.m[2][0] + m1.m[2][3] * m2.m[3][0];
+	out->m[2][1] = m1.m[2][0] * m2.m[0][1] + m1.m[2][1] * m2.m[1][1] + m1.m[2][2] * m2.m[2][1] + m1.m[2][3] * m2.m[3][1];
+	out->m[2][2] = m1.m[2][0] * m2.m[0][2] + m1.m[2][1] * m2.m[1][2] + m1.m[2][2] * m2.m[2][2] + m1.m[2][3] * m2.m[3][2];
+	out->m[2][3] = m1.m[2][0] * m2.m[0][2] + m1.m[2][1] * m2.m[1][3] + m1.m[2][2] * m2.m[2][3] + m1.m[2][3] * m2.m[3][3];
+
+	out->m[3][0] = m1.m[3][0] * m2.m[0][0] + m1.m[3][1] * m2.m[1][0] + m1.m[3][2] * m2.m[2][0] + m1.m[3][3] * m2.m[3][0];
+	out->m[3][1] = m1.m[3][0] * m2.m[0][1] + m1.m[3][1] * m2.m[1][1] + m1.m[3][2] * m2.m[2][1] + m1.m[3][3] * m2.m[3][1];
+	out->m[3][2] = m1.m[3][0] * m2.m[0][2] + m1.m[3][1] * m2.m[1][2] + m1.m[3][2] * m2.m[2][2] + m1.m[3][3] * m2.m[3][2];
+	out->m[3][3] = m1.m[3][0] * m2.m[0][2] + m1.m[3][1] * m2.m[1][3] + m1.m[3][2] * m2.m[2][3] + m1.m[3][3] * m2.m[3][3];
 }
 
 // view
@@ -96,17 +105,17 @@ void MatrixLookAtLH(MAT* out, const Vec3& eye, const Vec3& at, const Vec3& up)
 	out->m[0][0] = right.x;
 	out->m[1][0] = right.y;
 	out->m[2][0] = right.z;
-	out->m[3][0] = -Dot(right, eye);
+	out->m[3][0] = 0;// -Dot(right, eye);
 
 	out->m[0][1] = up.x;
 	out->m[1][1] = up.y;
 	out->m[2][1] = up.z;
-	out->m[3][1] = -Dot(up, eye);
+	out->m[3][1] = 0;//-Dot(up, eye);
 
 	out->m[0][2] = forward.x;
 	out->m[1][2] = forward.y;
 	out->m[2][2] = forward.z;
-	out->m[3][2] = -Dot(forward, eye);
+	out->m[3][2] = 0;//-Dot(forward, eye);
 
 	out->m[0][3] = out->m[1][3] = out->m[2][3] = 0.0f;
 	out->m[3][3] = 1.0f;
@@ -162,16 +171,27 @@ void MatrixPerspectiveFovRH(MAT* out, float fovY, float aspect, float zn, float 
 // 	out->_33 = 0.0f;
 }
 
-
+// view Port 구성은 gl과 완전 다르다.
+// dx : https://docs.microsoft.com/ko-kr/windows/win32/direct3d9/viewports-and-clipping
+// gl : https://gofo-coding.tistory.com/entry/Rendering-Pipeline-Modeling-Viewing-Projection-Viewport#title-27
 void MatrixSetViewPort(MAT* out, float x, float y, float w, float h)
 {
-// 	out->_11 = w * 0.5f;
-// 	out->_41 = x + w * 0.5f;
-// 	out->_22 = -h * 0.5f;
-// 	out->_42 = y + h * 0.5f;
+	out->m[0][0] = w * 0.5f;
+	out->m[1][1] = -h * 0.5f;
+	out->m[2][2] = 1;
+	out->m[3][0] = x + w * 0.5f;
+	out->m[3][1] = y + h * 0.5f;
+	out->m[3][2] = 0;
+
+// 	out->m[0][0] = w * 0.5f;
+// 	out->m[0][3] = x + w * 0.5f;
+// 	out->m[1][1] = -h * 0.5f;
+// 	out->m[1][3] = y + h * 0.5f;
+// 	out->m[2][2] = 1;
+// 	out->m[2][3] = 0;
 }
 
-void Transform_Homoenize(Vec3 *out, Vec4 &in, float x, float y, float w, float h)
+void Transform_Homogenize(Vec3 *out, Vec4 &in, float x, float y, float w, float h)
 {
 	float rhw = 1.0f / in.w;
 	out->x = (in.x * rhw + 1.0f) * (x + w * 0.5f);
@@ -185,3 +205,12 @@ void Transform_Homoenize(Vec3 *out, Vec4 &in, float x, float y, float w, float h
 // 	out->z = in.z * rhw;
 // 	//out->w = 1;
 }
+
+void PerspectiveDivide(Vec3* out, const Vec4 &in)
+{
+	float rhw = 1 / in.w;
+	out->x = in.x * rhw;
+	out->y = in.y * rhw;
+	out->z = in.z * rhw;
+}
+
