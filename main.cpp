@@ -10,20 +10,16 @@
 
 #include "predef.h"
 #include "math.h"
+#include "renderer.h"
 
 #pragma comment (lib,"SDL2.lib")
 #pragma comment (lib,"SDL2main.lib")
 
-//#define TEST	1
-
-#ifdef TEST
-#define NUMOFSTARS	3
-#else
-#define NUMOFSTARS	100
-#endif
 
 #define MIN_Z		0.1f
 #define MAX_Z		10
+
+#define NUMOFVERTEX	3
 
 ////////////////////////////////////////////////////////////////////////////////////
 
@@ -35,20 +31,20 @@ MAT view;
 MAT proj;
 MAT viewport;	// viwe port
 
-Vec3 stars[NUMOFSTARS];
-
 // Camra
 Vec3 eye;
 Vec3 at;
 Vec3 up;
 
-////////////////////////////////////////////////////////////////////////
 
+Vertex vertise[NUMOFVERTEX];
+
+////////////////////////////////////////////////////////////////////////
 
 
 void InitRenderer()
 {
-	eye.x = 0;	eye.y = 0;	eye.z = 0;
+	eye.x = 0;	eye.y = 0;	eye.z = -5;
 	at.x = 0;	at.y = 0;	at.z = 1;
 	up.x = 0;	up.y = 1;	up.z = 0;
 
@@ -66,6 +62,8 @@ void InitRenderer()
 	screenbuffer = new unsigned int[SCREEN_XSIZE * SCREEN_YSIZE * 4];
 }
 
+
+
 void DrawPoint(int x, int y, int color)
 {
 	if (x > SCREEN_XSIZE || x < 0) return;
@@ -74,72 +72,104 @@ void DrawPoint(int x, int y, int color)
 	screenbuffer[x + y * SCREEN_XSIZE] = color;
 }
 
+void DrawLine(int x0, int y0, int x1, int y1)
+{
+/*
+	int x = sx;
+	int y = sy;
+
+	// end - start
+	int w = ex - sx;
+	int h = ey - sy;
+
+	int f = 2 * h - w;
+	int df1 = 2 * h;
+	int df2 = 2 * (h - w);
+
+	for (x = sx; x < ex; x++)
+	{
+		DrawPoint(x, y, 0xFFFFFFFF);
+		if (f < 0)
+			f += df1;
+		else
+		{
+			y++;
+			f += df2;
+		}
+	}*/
+	int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+	int dy = abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+	int err = (dx > dy ? dx : -dy) / 2;
+
+	while (DrawPoint(x0, y0, 0xFFFFFFFF), x0 != x1 || y0 != y1) 
+	{
+		int e2 = err;
+		if (e2 > -dx) { err -= dy; x0 += sx; }
+		if (e2 < dy) { err += dx; y0 += sy; }
+	}
+}
+
+
 ////////////////////////////////////////////////////////////////////////
 
-Vec3 GetNewPos()
-{
-	float range = 2.f;
-	Vec3 pos;
-	pos.x = (rand() % (int)(range * 2 * 10) * 0.1f) - range;
-	pos.y = (rand() % (int)(range * 2 * 10) * 0.1f) - range;
-	pos.z = (float)(rand() % MAX_Z);
 
-	return pos;
+void InitTriangle()
+{
+	vertise[0].pos.x = 0;
+	vertise[0].pos.y = 1;
+	vertise[0].pos.z = 0;
+	//vertise[0].pos.z = 0;
+
+	vertise[1].pos.x = -1;
+	vertise[1].pos.y = -1;
+	vertise[1].pos.z = 0;
+
+	vertise[2].pos.x = 1;
+	vertise[2].pos.y = -1;
+	vertise[2].pos.z = 0;
+	//vertise[2].pos.z = 0;
+
 }
 
-void InitStar()
+float r = 0;
+void RenderTriangle()
 {
-#ifdef TEST
-	stars[0].x = 0;
-	stars[0].y = 0;
-	stars[0].z = 0.2f;
-
-	stars[1].x = -1;
-	stars[1].y = 0;
-	stars[1].z = 4;
-
-	stars[2].x = 0;
-	stars[2].y = 10;
-	stars[2].z = 9.9f;
-#else
-	for (int i = 0; i < NUMOFSTARS; i++)
-		stars[i] = GetNewPos();
-#endif
-}
-
-void RenderStars()
-{
-
-	for (int i = 0; i < NUMOFSTARS; i++)
+	//for (int i = 0; i < NUMOFVERTEX; i++)
 	{
+		Vec3 out[NUMOFVERTEX];
 		Vec4 pos;
-
-		//MAT vp;
 		MAT final;
-		Multiply(&final, view, proj);
+		MAT rot;
 		
-		Multiply(&final, final, viewport);
-		Transform4(&pos, stars[i], final);
+		Identity(&rot);
+		//MatrixRotationY(&rot, (r+=1) * _DEGREE);
+		MatRotate(&rot, 1, 1, 1, (r++) * _DEGREE);
 
-		Vec3 out;
-		PerspectiveDivide(&out, pos);
+		Vec3 tri[NUMOFVERTEX];
+		for (int i = 0; i < NUMOFVERTEX; i++)
+			Transform(&tri[i], vertise[i].pos, rot);
+
+		Multiply(&final, view, proj);
+		Multiply(&final, final, viewport);
+
+		for (int i = 0; i < NUMOFVERTEX; i++)
+		{
+			Vec3 t(tri[i].x, tri[i].y, tri[i].z);
+			Transform4(&pos, t, final);
+			PerspectiveDivide(&out[i], pos);
+		}
 
 		//float z = pos.z / pos.w;
+// 		int color = 0xFFFFFFFF;
+// 		DrawPoint((int)out[0].x, (int)out[0].y, color);
+// 		DrawPoint((int)out[1].x, (int)out[1].y, color);
+// 		DrawPoint((int)out[2].x, (int)out[2].y, color);
 
-#ifndef TEST
-		unsigned char bright = 255 - (unsigned char)( (stars[i].z / (float)MAX_Z) * 255 );
-		//unsigned char bright = (unsigned char)((1-z) * 255.f);
-		int color = bright << 24 | bright << 16 | bright << 8 | 0xff;
-#else
-		int color = 0xFFFFFFFF;
-#endif
-		DrawPoint((int)out.x, (int)out.y, color);
+		
+		DrawLine(out[0].x, out[0].y, out[1].x, out[1].y);
+		DrawLine(out[1].x, out[1].y, out[2].x, out[2].y);
+		DrawLine(out[2].x, out[2].y, out[0].x, out[0].y);
 
-#ifndef TEST
-		stars[i].z = stars[i].z - 0.04f;
-		if(stars[i].z < 0)
-			stars[i] = GetNewPos();
-#endif
 	}
 }
 
@@ -169,7 +199,7 @@ int main(int argc, char* argv[])
 		SCREEN_XSIZE, SCREEN_YSIZE);
 
 	InitRenderer();
-	InitStar();
+	InitTriangle();
 
 	while (1)
 	{
@@ -198,14 +228,14 @@ int main(int argc, char* argv[])
 						break;
 
 					case SDLK_LEFT:
-						eye.x -= 0.01f;
+						eye.x -= 0.1f;
 						Identity(&view);
 						MatrixLookAtLH(&view, eye, at, up);
 						printf("EYE X %f \n", eye.x);
 						break;
 
 					case SDLK_RIGHT:
-						eye.x += 0.01f;
+						eye.x += 0.1f;
 						Identity(&view);
 						MatrixLookAtLH(&view, eye, at, up);
 						printf("EYE X %f \n", eye.x);
@@ -231,7 +261,7 @@ int main(int argc, char* argv[])
 
 		memset((char*)screenbuffer, 0, sizeof(int) * SCREEN_XSIZE * SCREEN_YSIZE);
 		
-		RenderStars();
+		RenderTriangle();
 
 		SDL_RenderClear(renderer);
 		SDL_UpdateTexture(screen_texture, NULL, screenbuffer, SCREEN_XSIZE * 4);

@@ -48,9 +48,9 @@ void Translation(MAT* m, float x, float y, float z)
 
 void Transform(Vec3* out, const Vec3& v, const MAT& mat)
 {
-	out->x = v.x * mat.m[0][0] + v.y * mat.m[1][0] + v.z * mat.m[2][0];
-	out->y = v.x * mat.m[0][1] + v.y * mat.m[1][1] + v.z * mat.m[2][1];
-	out->z = v.x * mat.m[0][2] + v.y * mat.m[1][2] + v.z * mat.m[2][2];
+	out->x = v.x * mat.m[0][0] + v.y * mat.m[1][0] + v.z * mat.m[2][0] + mat.m[3][0];
+	out->y = v.x * mat.m[0][1] + v.y * mat.m[1][1] + v.z * mat.m[2][1] + mat.m[3][1];
+	out->z = v.x * mat.m[0][2] + v.y * mat.m[1][2] + v.z * mat.m[2][2] + mat.m[3][2];
 }
 
 void Transform4(Vec4* out, const Vec3& v, const MAT& mat)
@@ -105,17 +105,17 @@ void MatrixLookAtLH(MAT* out, const Vec3& eye, const Vec3& at, const Vec3& up)
 	out->m[0][0] = right.x;
 	out->m[1][0] = right.y;
 	out->m[2][0] = right.z;
-	out->m[3][0] = 0;// -Dot(right, eye);
+	out->m[3][0] = eye.x; //-Dot(right, eye);
 
 	out->m[0][1] = up.x;
 	out->m[1][1] = up.y;
 	out->m[2][1] = up.z;
-	out->m[3][1] = 0;//-Dot(up, eye);
+	out->m[3][1] = eye.y; //-Dot(up, eye);
 
 	out->m[0][2] = forward.x;
 	out->m[1][2] = forward.y;
 	out->m[2][2] = forward.z;
-	out->m[3][2] = 0;//-Dot(forward, eye);
+	out->m[3][2] = eye.z; //-Dot(forward, eye);
 
 	out->m[0][3] = out->m[1][3] = out->m[2][3] = 0.0f;
 	out->m[3][3] = 1.0f;
@@ -212,5 +212,43 @@ void PerspectiveDivide(Vec3* out, const Vec4 &in)
 	out->x = in.x * rhw;
 	out->y = in.y * rhw;
 	out->z = in.z * rhw;
+}
+
+void MatRotate(MAT* m, float x, float y, float z, float theta) 
+{
+	float qsin = (float)sin(theta * 0.5f);
+	float qcos = (float)cos(theta * 0.5f);
+	Vec3 vec(x, y, z);
+
+	float w = qcos;
+	Normalize(&vec);
+
+	x = vec.x * qsin;
+	y = vec.y * qsin;
+	z = vec.z * qsin;
+	m->m[0][0] = 1 - 2 * y * y - 2 * z * z;
+	m->m[1][0] = 2 * x * y - 2 * w * z;
+	m->m[2][0] = 2 * x * z + 2 * w * y;
+	m->m[0][1] = 2 * x * y + 2 * w * z;
+	m->m[1][1] = 1 - 2 * x * x - 2 * z * z;
+	m->m[2][1] = 2 * y * z - 2 * w * x;
+	m->m[0][2] = 2 * x * z - 2 * w * y;
+	m->m[1][2] = 2 * y * z + 2 * w * x;
+	m->m[2][2] = 1 - 2 * x * x - 2 * y * y;
+	m->m[0][3] = m->m[1][3] = m->m[2][3] = 0.0f;
+	m->m[3][0] = m->m[3][1] = m->m[3][2] = 0.0f;
+	m->m[3][3] = 1.0f;
+}
+
+
+void MatrixRotationY(MAT* pOut, float rad)
+{
+	float cs = (float)cos(rad);
+	float ss = (float)sin(rad);
+
+	pOut->m[0][0] = cs;
+	pOut->m[0][2] = -ss;
+	pOut->m[2][0] = ss;
+	pOut->m[2][2] = cs;
 }
 
