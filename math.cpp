@@ -105,20 +105,20 @@ void MatrixLookAtLH(MAT* out, const Vec3& eye, const Vec3& at, const Vec3& up)
 	out->m[0][0] = right.x;
 	out->m[1][0] = right.y;
 	out->m[2][0] = right.z;
-	//out->m[3][0] = eye.x; //-Dot(right, eye);
-	out->m[3][0] = -Dot(right, eye);
+	out->m[3][0] = eye.x;
+	//out->m[3][0] = -Dot(right, eye);
 
 	out->m[0][1] = up.x;
 	out->m[1][1] = up.y;
 	out->m[2][1] = up.z;
-	//out->m[3][1] = eye.y; //-Dot(up, eye);
-	out->m[3][1] = -Dot(up, eye);
+	out->m[3][1] = eye.y;
+	//out->m[3][1] = -Dot(up, eye);
 
 	out->m[0][2] = forward.x;
 	out->m[1][2] = forward.y;
 	out->m[2][2] = forward.z;
-	//out->m[3][2] = eye.z; //-Dot(forward, eye);
-	out->m[3][2] = -Dot(forward, eye);
+	out->m[3][2] = eye.z;
+	//out->m[3][2] = -Dot(forward, eye);
 
 	out->m[0][3] = out->m[1][3] = out->m[2][3] = 0.0f;
 	out->m[3][3] = 1.0f;

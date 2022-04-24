@@ -206,47 +206,43 @@ void InitTriangle()
 float r = 0;
 void RenderTriangle()
 {
-	//for (int i = 0; i < NUMOFVERTEX; i++)
-	{
-		Vec3 out[NUMOFVERTEX];
-		Vec4 pos;
-		MAT final;
-		MAT rot;
+	Vec3 out[NUMOFVERTEX];
+	Vec4 pos;
+	MAT final;
+	MAT rot;
 		
-		Identity(&rot);
-		MatrixRotationY(&rot, (r+=1) * _DEGREE);
-		//MatRotate(&rot, 1, 1, 1, (r++) * _DEGREE);
+	Identity(&rot);
+	MatrixRotationY(&rot, (r+=1) * _DEGREE);
+	//MatRotate(&rot, 1, 1, 1, (r++) * _DEGREE);
 
-		Vec3 tri[NUMOFVERTEX];
-		for (int i = 0; i < NUMOFVERTEX; i++)
-			tri[i] = rot * vertise[i].pos;
-			//Transform(&tri[i], vertise[i].pos, rot);
+	Vec3 tri[NUMOFVERTEX];
+	for (int i = 0; i < NUMOFVERTEX; i++)
+		tri[i] = rot * vertise[i].pos;
+		//Transform(&tri[i], vertise[i].pos, rot);
 
-		//Multiply(&final, view, proj);
-		//Multiply(&final, final, viewport);
-		final = view * proj * viewport;
+	//Multiply(&final, view, proj);
+	//Multiply(&final, final, viewport);
+	final = view * proj * viewport;
 
-		for (int i = 0; i < NUMOFVERTEX; i++)
-		{
-			Vec3 t(tri[i].x, tri[i].y, tri[i].z);
-			Transform4(&pos, t, final);
-			PerspectiveDivide(&out[i], pos);
-		}
+	for (int i = 0; i < NUMOFVERTEX; i++)
+	{
+		Vec3 t(tri[i].x, tri[i].y, tri[i].z);
+		Transform4(&pos, t, final);
+		PerspectiveDivide(&out[i], pos);
+	}
 
 
 // 		DrawLine(out[0].x, out[0].y, out[1].x, out[1].y);
 // 		DrawLine(out[1].x, out[1].y, out[2].x, out[2].y);
 // 		DrawLine(out[2].x, out[2].y, out[0].x, out[0].y);
 
-		DrawTriangle(out[0], out[1], out[2]);
+	DrawTriangle(out[0], out[1], out[2]);
 
-		//float z = pos.z / pos.w;
-		int color = 0x00FF00FF;
-		DrawPoint((int)out[0].x, (int)out[0].y, color);
-		DrawPoint((int)out[1].x, (int)out[1].y, color);
-		DrawPoint((int)out[2].x, (int)out[2].y, color);
-
-	}
+	//float z = pos.z / pos.w;
+	int color = 0x00FF00FF;
+	DrawPoint((int)out[0].x, (int)out[0].y, color);
+	DrawPoint((int)out[1].x, (int)out[1].y, color);
+	DrawPoint((int)out[2].x, (int)out[2].y, color);
 }
 
 ////////////////////////////////////////////////////////////////////////
