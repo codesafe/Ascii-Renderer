@@ -7,6 +7,7 @@
 #include <SDL.h>
 //#include <SDL_image.h>
 #include <SDL_timer.h>
+#include <functional>
 
 #include "predef.h"
 #include "math.h"
@@ -74,29 +75,6 @@ void DrawPoint(int x, int y, int color)
 
 void DrawLine(int x0, int y0, int x1, int y1)
 {
-/*
-	int x = sx;
-	int y = sy;
-
-	// end - start
-	int w = ex - sx;
-	int h = ey - sy;
-
-	int f = 2 * h - w;
-	int df1 = 2 * h;
-	int df2 = 2 * (h - w);
-
-	for (x = sx; x < ex; x++)
-	{
-		DrawPoint(x, y, 0xFFFFFFFF);
-		if (f < 0)
-			f += df1;
-		else
-		{
-			y++;
-			f += df2;
-		}
-	}*/
 	int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
 	int dy = abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
 	int err = (dx > dy ? dx : -dy) / 2;
@@ -109,26 +87,120 @@ void DrawLine(int x0, int y0, int x1, int y1)
 	}
 }
 
+void DrawFlatTop(const Vec3& v0, const Vec3& v1, const Vec3& v2)
+{
+	float m0 = (v2.x - v0.x) / (v2.y - v0.y);
+	float m1 = (v2.x - v1.x) / (v2.y - v1.y);
+
+	int ys = (int)ceil(v0.y - 0.5f);	// y start
+	int ye = (int)ceil(v2.y - 0.5f);	// y end
+
+	for (int y = ys; y < ye; y++)
+	{
+		float px0 = m0 * (float(y) + 0.5f - v0.y) + v0.x;
+		float px1 = m1 * (float(y) + 0.5f - v1.y) + v1.x;
+
+// 		int xs = (int)ceil(px0 - 0.5f);	// x start
+// 		int xe = (int)ceil(px1 - 0.5f);	// x end
+
+		int xs = (int)(px0 - 0.5f);	// x start
+		int xe = (int)(px1 - 0.5f);	// x end
+
+		for (int x = xs; x < xe; x++)
+		{
+			DrawPoint(x, y, 0xFFFFFFFF);
+		}
+	}
+}
+
+
+void DrawFlatBottom(const Vec3& v0, const Vec3& v1, const Vec3& v2)
+{
+	float m0 = (v1.x - v0.x) / (v1.y - v0.y);
+	float m1 = (v2.x - v0.x) / (v2.y - v0.y);
+
+	const int ys = (int)ceil(v0.y - 0.5f);
+	const int ye = (int)ceil(v2.y - 0.5f);
+
+	for (int y = ys; y < ye; y++)
+	{
+		float px0 = m0 * (float(y) + 0.5f - v0.y) + v0.x;
+		float px1 = m1 * (float(y) + 0.5f - v0.y) + v0.x;
+
+		//int xs = (int)ceil(px0 - 0.5f);
+		//int xe = (int)ceil(px1 - 0.5f);
+		int xs = (int)(px0 - 0.5f);
+		int xe = (int)(px1 - 0.5f);
+
+		for (int x = xs; x < xe; x++)
+		{
+			DrawPoint(x, y, 0x00FFFFFF);
+		}
+	}
+}
+
+
+void DrawTriangle(const Vec3& v0, const Vec3& v1, const Vec3& v2)
+{
+	// using pointers so we can swap (for sorting purposes)
+	const Vec3* pv0 = &v0;
+	const Vec3* pv1 = &v1;
+	const Vec3* pv2 = &v2;
+
+	// sorting vertices by y
+	if (pv1->y < pv0->y) std::swap(pv0, pv1);
+	if (pv2->y < pv1->y) std::swap(pv1, pv2);
+	if (pv1->y < pv0->y) std::swap(pv0, pv1);
+
+	if (pv0->y == pv1->y)
+	{
+		// natural flat top
+		// sorting top vertices by x
+		if (pv1->x < pv0->x) std::swap(pv0, pv1);
+		DrawFlatTop(*pv0, *pv1, *pv2);
+	}
+	else if (pv1->y == pv2->y)
+	{
+		// natural flat bottom
+		// sorting bottom vertices by x
+		if (pv2->x < pv1->x) std::swap(pv1, pv2);
+		DrawFlatBottom(*pv0, *pv1, *pv2);
+	}
+	else
+	{
+		// find splitting vertex
+		const float alphaSplit = (pv1->y - pv0->y) / (pv2->y - pv0->y);
+		const Vec3 vi = *pv0 + (*pv2 - *pv0) * alphaSplit;
+
+		if (pv1->x < vi.x) // major right
+		{
+			DrawFlatBottom(*pv0, *pv1, vi);
+			DrawFlatTop(*pv1, vi, *pv2);
+		}
+		else // major left
+		{
+			DrawFlatBottom(*pv0, vi, *pv1);
+			DrawFlatTop(vi, *pv1, *pv2);
+		}
+	}
+}
 
 ////////////////////////////////////////////////////////////////////////
 
 
 void InitTriangle()
 {
-	vertise[0].pos.x = 0;
+	vertise[0].pos.x = -1;
 	vertise[0].pos.y = 1;
 	vertise[0].pos.z = 0;
-	//vertise[0].pos.z = 0;
 
-	vertise[1].pos.x = -1;
-	vertise[1].pos.y = -1;
+	vertise[1].pos.x = 1;
+	vertise[1].pos.y = 1;
 	vertise[1].pos.z = 0;
 
-	vertise[2].pos.x = 1;
+	vertise[2].pos.x = 0;
 	vertise[2].pos.y = -1;
 	vertise[2].pos.z = 0;
-	//vertise[2].pos.z = 0;
-
 }
 
 float r = 0;
@@ -142,15 +214,17 @@ void RenderTriangle()
 		MAT rot;
 		
 		Identity(&rot);
-		//MatrixRotationY(&rot, (r+=1) * _DEGREE);
-		MatRotate(&rot, 1, 1, 1, (r++) * _DEGREE);
+		MatrixRotationY(&rot, (r+=1) * _DEGREE);
+		//MatRotate(&rot, 1, 1, 1, (r++) * _DEGREE);
 
 		Vec3 tri[NUMOFVERTEX];
 		for (int i = 0; i < NUMOFVERTEX; i++)
-			Transform(&tri[i], vertise[i].pos, rot);
+			tri[i] = rot * vertise[i].pos;
+			//Transform(&tri[i], vertise[i].pos, rot);
 
-		Multiply(&final, view, proj);
-		Multiply(&final, final, viewport);
+		//Multiply(&final, view, proj);
+		//Multiply(&final, final, viewport);
+		final = view * proj * viewport;
 
 		for (int i = 0; i < NUMOFVERTEX; i++)
 		{
@@ -159,16 +233,18 @@ void RenderTriangle()
 			PerspectiveDivide(&out[i], pos);
 		}
 
-		//float z = pos.z / pos.w;
-// 		int color = 0xFFFFFFFF;
-// 		DrawPoint((int)out[0].x, (int)out[0].y, color);
-// 		DrawPoint((int)out[1].x, (int)out[1].y, color);
-// 		DrawPoint((int)out[2].x, (int)out[2].y, color);
 
-		
-		DrawLine(out[0].x, out[0].y, out[1].x, out[1].y);
-		DrawLine(out[1].x, out[1].y, out[2].x, out[2].y);
-		DrawLine(out[2].x, out[2].y, out[0].x, out[0].y);
+// 		DrawLine(out[0].x, out[0].y, out[1].x, out[1].y);
+// 		DrawLine(out[1].x, out[1].y, out[2].x, out[2].y);
+// 		DrawLine(out[2].x, out[2].y, out[0].x, out[0].y);
+
+		DrawTriangle(out[0], out[1], out[2]);
+
+		//float z = pos.z / pos.w;
+		int color = 0x00FF00FF;
+		DrawPoint((int)out[0].x, (int)out[0].y, color);
+		DrawPoint((int)out[1].x, (int)out[1].y, color);
+		DrawPoint((int)out[2].x, (int)out[2].y, color);
 
 	}
 }
