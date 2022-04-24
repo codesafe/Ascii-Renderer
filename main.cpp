@@ -14,10 +14,16 @@
 #pragma comment (lib,"SDL2.lib")
 #pragma comment (lib,"SDL2main.lib")
 
+//#define TEST	1
 
-
+#ifdef TEST
 #define NUMOFSTARS	3
-#define MAX_Z		100
+#else
+#define NUMOFSTARS	100
+#endif
+
+#define MIN_Z		0.1f
+#define MAX_Z		10
 
 ////////////////////////////////////////////////////////////////////////////////////
 
@@ -31,15 +37,19 @@ MAT viewport;	// viwe port
 
 Vec3 stars[NUMOFSTARS];
 
+// Camra
+Vec3 eye;
+Vec3 at;
+Vec3 up;
+
 ////////////////////////////////////////////////////////////////////////
+
+
 
 void InitRenderer()
 {
-	Vec3 eye;
 	eye.x = 0;	eye.y = 0;	eye.z = 0;
-	Vec3 at;
 	at.x = 0;	at.y = 0;	at.z = 1;
-	Vec3 up;
 	up.x = 0;	up.y = 1;	up.z = 0;
 
 	// Init view mat
@@ -48,7 +58,7 @@ void InitRenderer()
 
 	// projection mat
 	Identity(&proj);
-	MatrixPerspectiveFovLH(&proj, fov*_DEGREE, aspect, 0.1f, MAX_Z);
+	MatrixPerspectiveFovLH(&proj, fov*_DEGREE, aspect, MIN_Z, MAX_Z);
 
 	Identity(&viewport);
 	MatrixSetViewPort(&viewport, 0, 0, SCREEN_XSIZE, SCREEN_YSIZE);
@@ -68,10 +78,10 @@ void DrawPoint(int x, int y, int color)
 
 Vec3 GetNewPos()
 {
-	float range = 20.f;
+	float range = 2.f;
 	Vec3 pos;
-	pos.x = (rand() % (int)(range * 20) * 0.1f) - range;
-	pos.y = (rand() % (int)(range * 20) * 0.1f) - range;
+	pos.x = (rand() % (int)(range * 2 * 10) * 0.1f) - range;
+	pos.y = (rand() % (int)(range * 2 * 10) * 0.1f) - range;
 	pos.z = (float)(rand() % MAX_Z);
 
 	return pos;
@@ -79,20 +89,22 @@ Vec3 GetNewPos()
 
 void InitStar()
 {
-// 	for (int i = 0; i < NUMOFSTARS; i++)
-// 		stars[i] = GetNewPos();
-
+#ifdef TEST
 	stars[0].x = 0;
 	stars[0].y = 0;
-	stars[0].z = 1;
+	stars[0].z = 0.2f;
 
-	stars[1].x = 10;
+	stars[1].x = -1;
 	stars[1].y = 0;
-	stars[1].z = 20;
+	stars[1].z = 4;
 
 	stars[2].x = 0;
-	stars[2].y = -1;
-	stars[2].z = MAX_Z;
+	stars[2].y = 10;
+	stars[2].z = 9.9f;
+#else
+	for (int i = 0; i < NUMOFSTARS; i++)
+		stars[i] = GetNewPos();
+#endif
 }
 
 void RenderStars()
@@ -101,27 +113,33 @@ void RenderStars()
 	for (int i = 0; i < NUMOFSTARS; i++)
 	{
 		Vec4 pos;
-		Vec4 s(stars[i].x, stars[i].y, stars[i].z, 1);
 
-		MAT vp;
+		//MAT vp;
 		MAT final;
-		Multiply(&vp, view, proj);
-		Multiply(&final, vp, viewport);
-		Transform4(&pos, s, final);
+		Multiply(&final, view, proj);
+		
+		Multiply(&final, final, viewport);
+		Transform4(&pos, stars[i], final);
 
 		Vec3 out;
 		PerspectiveDivide(&out, pos);
 
-		//unsigned char bright = 255 - (unsigned char)( (stars[i].z / (float)MAX_Z) * 255 );
-		unsigned char bright = (unsigned char)(out.z * 255.f);
+		//float z = pos.z / pos.w;
+
+#ifndef TEST
+		unsigned char bright = 255 - (unsigned char)( (stars[i].z / (float)MAX_Z) * 255 );
+		//unsigned char bright = (unsigned char)((1-z) * 255.f);
 		int color = bright << 24 | bright << 16 | bright << 8 | 0xff;
+#else
+		int color = 0xFFFFFFFF;
+#endif
+		DrawPoint((int)out.x, (int)out.y, color);
 
-		DrawPoint((int)out.x, (int)out.y, color/*0x0000FFFF*/);
-
-//		stars[i].z = stars[i].z - 0.1f;
-
+#ifndef TEST
+		stars[i].z = stars[i].z - 0.04f;
 		if(stars[i].z < 0)
 			stars[i] = GetNewPos();
+#endif
 	}
 }
 
@@ -168,16 +186,32 @@ int main(int argc, char* argv[])
 					case SDLK_UP:
 						fov++;
 						Identity(&proj);
-						MatrixPerspectiveFovLH(&proj, fov * _DEGREE, aspect, 0.1f, 400);
+						MatrixPerspectiveFovLH(&proj, fov * _DEGREE, aspect, MIN_Z, MAX_Z);
 						printf("FOV %f \n", fov);
 						break;
+
 					case SDLK_DOWN:
 						fov--;
 						Identity(&proj);
-						MatrixPerspectiveFovLH(&proj, fov * _DEGREE, aspect, 0.1f, 400);
+						MatrixPerspectiveFovLH(&proj, fov * _DEGREE, aspect, MIN_Z, MAX_Z);
 						printf("FOV %f \n", fov);
+						break;
+
+					case SDLK_LEFT:
+						eye.x -= 0.01f;
+						Identity(&view);
+						MatrixLookAtLH(&view, eye, at, up);
+						printf("EYE X %f \n", eye.x);
+						break;
+
+					case SDLK_RIGHT:
+						eye.x += 0.01f;
+						Identity(&view);
+						MatrixLookAtLH(&view, eye, at, up);
+						printf("EYE X %f \n", eye.x);
 
 						break;
+
 					default:
 						break;
 					}

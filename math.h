@@ -54,7 +54,7 @@ struct MAT
 void Identity(MAT *m);
 void Translation(MAT* m, float x, float y, float z);
 void Transform(Vec3* out, const Vec3& v, const MAT& m);
-void Transform4(Vec4* out, const Vec4& v, const MAT& m);
+void Transform4(Vec4* out, const Vec3& v, const MAT& m);
 void Multiply(MAT* out, const MAT& m1, const MAT& m2);
 void MatrixLookAtLH(MAT* out, const Vec3& eye, const Vec3& at, const Vec3& up);
 void MatrixPerspectiveFovLH(MAT* out, float fovY, float aspect, float zn, float zf);
