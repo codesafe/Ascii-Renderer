@@ -1,4 +1,4 @@
-
+#include <windows.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
@@ -13,8 +13,11 @@
 #include "math.h"
 #include "renderer.h"
 
+
+
 #pragma comment (lib,"SDL2.lib")
 #pragma comment (lib,"SDL2main.lib")
+
 
 
 #define MIN_Z		0.1f
@@ -37,10 +40,58 @@ Vec3 eye;
 Vec3 at;
 Vec3 up;
 
-
 Vertex vertise[NUMOFVERTEX];
+TEXTURE *texture;
 
 ////////////////////////////////////////////////////////////////////////
+
+
+TEXTURE* LoadTexture(const char* fname)
+{
+	FILE* fp = fopen(fname, "rb");
+
+	BITMAPINFOHEADER bm;
+	int i, off;
+	if (fp == NULL)
+		return NULL;
+	fseek(fp, 10, SEEK_SET);
+
+	fread(&off, 4, 1, fp);
+	fread(&bm, 1, sizeof(bm), fp);
+	fseek(fp, off, SEEK_SET);
+	if (bm.biBitCount != 24)
+		return NULL;
+
+	TEXTURE* pTexture = new TEXTURE;
+	pTexture->w = bm.biWidth;
+	pTexture->h = bm.biHeight;
+	pTexture->pitch = bm.biWidth * 3;
+	pTexture->image = new unsigned char[pTexture->h * pTexture->pitch];
+
+	for (i = bm.biHeight - 1; i >= 0; i--)
+	{
+		fread(pTexture->image + i * pTexture->pitch, 1, pTexture->pitch, fp);
+		fseek(fp, (4 - ((bm.biWidth * 3) & 3)) & 3, SEEK_CUR); // skip padding bytes
+	}
+	fclose(fp);
+
+	return pTexture;
+}
+
+int ReadTexel(float u, float v)
+{
+	int color = 0xffffffff;
+	int tu = (int)(u * texture->w);
+	int tv = (int)(v * texture->h);
+
+	char b = texture->image[tv * texture->pitch + tu * 3 + 0];
+	char g = texture->image[tv * texture->pitch + tu * 3 + 1];
+	char r = texture->image[tv * texture->pitch + tu * 3 + 2];
+
+	//memcpy(&color, texture->image + tv * texture->pitch + tu * 3, 3);
+	color = r << 24 | g << 16 | b << 8 | 0xff;
+	return color;
+}
 
 
 void InitRenderer()
@@ -61,6 +112,8 @@ void InitRenderer()
 	MatrixSetViewPort(&viewport, 0, 0, SCREEN_XSIZE, SCREEN_YSIZE);
 	
 	screenbuffer = new unsigned int[SCREEN_XSIZE * SCREEN_YSIZE * 4];
+
+	texture = LoadTexture("texture.bmp");
 }
 
 
@@ -87,6 +140,7 @@ void DrawLine(int x0, int y0, int x1, int y1)
 	}
 }
 
+/*
 void DrawFlatTop(const Vec3& v0, const Vec3& v1, const Vec3& v2)
 {
 	float m0 = (v2.x - v0.x) / (v2.y - v0.y);
@@ -142,33 +196,26 @@ void DrawFlatBottom(const Vec3& v0, const Vec3& v1, const Vec3& v2)
 
 void DrawTriangle(const Vec3& v0, const Vec3& v1, const Vec3& v2)
 {
-	// using pointers so we can swap (for sorting purposes)
 	const Vec3* pv0 = &v0;
 	const Vec3* pv1 = &v1;
 	const Vec3* pv2 = &v2;
 
-	// sorting vertices by y
 	if (pv1->y < pv0->y) std::swap(pv0, pv1);
 	if (pv2->y < pv1->y) std::swap(pv1, pv2);
 	if (pv1->y < pv0->y) std::swap(pv0, pv1);
 
 	if (pv0->y == pv1->y)
 	{
-		// natural flat top
-		// sorting top vertices by x
 		if (pv1->x < pv0->x) std::swap(pv0, pv1);
 		DrawFlatTop(*pv0, *pv1, *pv2);
 	}
 	else if (pv1->y == pv2->y)
 	{
-		// natural flat bottom
-		// sorting bottom vertices by x
 		if (pv2->x < pv1->x) std::swap(pv1, pv2);
 		DrawFlatBottom(*pv0, *pv1, *pv2);
 	}
 	else
 	{
-		// find splitting vertex
 		const float alphaSplit = (pv1->y - pv0->y) / (pv2->y - pv0->y);
 		const Vec3 vi = *pv0 + (*pv2 - *pv0) * alphaSplit;
 
@@ -185,26 +232,29 @@ void DrawTriangle(const Vec3& v0, const Vec3& v1, const Vec3& v2)
 	}
 }
 
+*/
+
 // Half Space algorithms
-void triangle(const Vec3& v1, const Vec3& v2, const Vec3& v3)
+void triangle(const Vertex& v1, const Vertex& v2, const Vertex& v3)
 {
-	float y1 = v1.y;
-	float y2 = v2.y;
-	float y3 = v3.y;
+	float y1 = v1.pos.y;   
+	float y2 = v2.pos.y;
+	float y3 = v3.pos.y;
 
-	float x1 = v1.x;
-	float x2 = v2.x;
-	float x3 = v3.x;
+	float x1 = v1.pos.x;
+	float x2 = v2.pos.x;
+	float x3 = v3.pos.x;
 
-	int minx = (int)min(x1, x2);
-	minx = (int)min(minx, x3);
-	int maxx = (int)max(x1, x2);
-	maxx = (int)max(maxx, x3);
+	int minx = (int)min(min(x1, x2), x3);
+	int maxx = (int)max(max(x1, x2), x3);
+	int miny = (int)min(min(y1, y2), y3);
+	int maxy = (int)max(max(y1, y2), y3);
 
-	int miny = (int)min(y1, y2);
-	miny = (int)min(miny, y3);
-	int maxy = (int)max(y1, y2);
-	maxy = (int)max(maxy, y3);
+	float minu = min(min(v1.uv.u, v2.uv.u), v3.uv.u);
+	float maxu = max(max(v1.uv.u, v2.uv.u), v3.uv.u);
+	float minv = min(min(v1.uv.v, v2.uv.v), v3.uv.v);
+	float maxv = max(max(v1.uv.v, v2.uv.v), v3.uv.v);
+
 
 	for (int y = miny; y < maxy; y++)
 	{
@@ -214,7 +264,17 @@ void triangle(const Vec3& v1, const Vec3& v2, const Vec3& v3)
 				(x2 - x3) * (y - y2) - (y2 - y3) * (x - x2) > 0 &&
 				(x3 - x1) * (y - y3) - (y3 - y1) * (x - x3) > 0)
 			{
-				DrawPoint(x, y, 0xFFFFFFFF);
+// 				float u = 0;
+// 				float v = 0;
+				float u = ((x - minx) * (maxu - minu) / (maxx - minx)) + minu;
+				float v = ((y - miny) * (maxv - minv) / (maxy - miny)) + minv;
+// 				u = lerp(minx, x, t);
+// 				v = lerp(miny, y, t);
+
+				//int color = 0xffffffff;
+				int color = ReadTexel(u, v);
+
+				DrawPoint(x, y, color);
 			}
 		}
 	}
@@ -228,14 +288,20 @@ void InitTriangle()
 	vertise[0].pos.x = -1;
 	vertise[0].pos.y = 1;
 	vertise[0].pos.z = 0;
+	vertise[0].uv.u = 0;
+	vertise[0].uv.v = 1;
 
-	vertise[1].pos.x = 1;
-	vertise[1].pos.y = 1;
+	vertise[1].pos.x = 0;
+	vertise[1].pos.y = -1;
 	vertise[1].pos.z = 0;
+	vertise[1].uv.u = 0.5f;
+	vertise[1].uv.v = 0;
 
-	vertise[2].pos.x = 0;
-	vertise[2].pos.y = -1;
+	vertise[2].pos.x = 1;
+	vertise[2].pos.y = 1;
 	vertise[2].pos.z = 0;
+	vertise[2].uv.u = 1;
+	vertise[2].uv.v = 1;
 }
 
 float r = 0;
@@ -247,8 +313,8 @@ void RenderTriangle()
 	MAT rot;
 		
 	Identity(&rot);
-	MatrixRotationY(&rot, (r+=1) * _DEGREE);
-	//MatRotate(&rot, 1, 1, 1, (r++) * _DEGREE);
+	//MatrixRotationY(&rot, (r+=1) * _DEGREE);
+	MatRotate(&rot, 0, 0, 1, (r++) * _DEGREE);
 
 	Vec3 tri[NUMOFVERTEX];
 	for (int i = 0; i < NUMOFVERTEX; i++)
@@ -272,7 +338,17 @@ void RenderTriangle()
 // 		DrawLine(out[2].x, out[2].y, out[0].x, out[0].y);
 
 	//DrawTriangle(out[0], out[1], out[2]);
-	triangle(out[0], out[1], out[2]);
+	Vertex t[NUMOFVERTEX];
+	t[0].pos = out[0];
+	t[0].uv = vertise[0].uv;
+
+	t[1].pos = out[1];
+	t[1].uv = vertise[1].uv;
+
+	t[2].pos = out[2];
+	t[2].uv = vertise[2].uv;
+
+	triangle(t[0], t[1], t[2]);
 
 	//float z = pos.z / pos.w;
 	int color = 0x00FF00FF;

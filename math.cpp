@@ -255,3 +255,8 @@ void MatrixRotationY(MAT* pOut, float rad)
 	pOut->m[2][2] = cs;
 }
 
+
+float lerp(float v1, float v2, float t) 
+{ 
+	return v1 + (v2 - v1) * t; 
+}

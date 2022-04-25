@@ -11,9 +11,9 @@ struct UV
 struct Vertex
 {
 	Vec3 pos; 
-	UV tc; 
-	int color; 
-	float rhw;
+	UV uv; 
+	//int color; 
+	//float rhw;
 };
 
 
