@@ -164,4 +164,12 @@ void MatrixSetViewPort(MAT* out, float x, float y, float w, float h);
 void Transform_Homogenize(Vec3* out, Vec4& in, float x, float y, float w, float h);
 void PerspectiveDivide(Vec3* out, const Vec4 &in);
 
+////////////////////////////////////////////////////////////////////////////////////
+
+struct EDGE
+{
+
+};
+
+
 #endif

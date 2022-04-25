@@ -185,6 +185,41 @@ void DrawTriangle(const Vec3& v0, const Vec3& v1, const Vec3& v2)
 	}
 }
 
+// Half Space algorithms
+void triangle(const Vec3& v1, const Vec3& v2, const Vec3& v3)
+{
+	float y1 = v1.y;
+	float y2 = v2.y;
+	float y3 = v3.y;
+
+	float x1 = v1.x;
+	float x2 = v2.x;
+	float x3 = v3.x;
+
+	int minx = (int)min(x1, x2);
+	minx = (int)min(minx, x3);
+	int maxx = (int)max(x1, x2);
+	maxx = (int)max(maxx, x3);
+
+	int miny = (int)min(y1, y2);
+	miny = (int)min(miny, y3);
+	int maxy = (int)max(y1, y2);
+	maxy = (int)max(maxy, y3);
+
+	for (int y = miny; y < maxy; y++)
+	{
+		for (int x = minx; x < maxx; x++)
+		{
+			if ((x1 - x2) * (y - y1) - (y1 - y2) * (x - x1) > 0 &&
+				(x2 - x3) * (y - y2) - (y2 - y3) * (x - x2) > 0 &&
+				(x3 - x1) * (y - y3) - (y3 - y1) * (x - x3) > 0)
+			{
+				DrawPoint(x, y, 0xFFFFFFFF);
+			}
+		}
+	}
+}
+
 ////////////////////////////////////////////////////////////////////////
 
 
@@ -236,7 +271,8 @@ void RenderTriangle()
 // 		DrawLine(out[1].x, out[1].y, out[2].x, out[2].y);
 // 		DrawLine(out[2].x, out[2].y, out[0].x, out[0].y);
 
-	DrawTriangle(out[0], out[1], out[2]);
+	//DrawTriangle(out[0], out[1], out[2]);
+	triangle(out[0], out[1], out[2]);
 
 	//float z = pos.z / pos.w;
 	int color = 0x00FF00FF;
