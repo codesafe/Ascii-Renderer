@@ -169,5 +169,11 @@ void PerspectiveDivide(Vec3* out, const Vec4 &in);
 
 float lerp(float v1, float v2, float t);
 
+struct EDGE
+{
+	float x, z, w;
+	float r, g, b, a;
+	float u, v;
+};
 
 #endif

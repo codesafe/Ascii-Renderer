@@ -41,7 +41,16 @@ Vec3 at;
 Vec3 up;
 
 Vertex vertise[NUMOFVERTEX];
+Vertex vertise2[NUMOFVERTEX];
 TEXTURE *texture;
+
+char gradientTbl2[] = { "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. " };
+char gradientTbl[] = { 36, 64, 66, 37, 56, 38, 87, 77, 35, 42, 111, 97, 104, 107, 98, 100, 112, 113, 119,
+109, 90, 79, 48, 81, 76, 67, 74, 85, 89, 88, 122, 99, 118, 117, 110, 120, 114, 106, 102, 116, 47, 92,
+124, 40, 41, 49, 123, 125, 91, 93, 63, 45, 95, 43, 126, 60, 62, 105, 33, 108, 73, 59, 58, 44, 34, 94, 96, 39, 46, 32 };
+
+
+//ASCIIGRADIENT = ' .:`\'-,;~_!"?c\\^<>|=sr1Jo*(C)utia3zLvey75jST{lx}IfY]qp9n0G62Vk8UXhZ4bgdPEKA$wQm&#HDR@WNBM'
 
 ////////////////////////////////////////////////////////////////////////
 
@@ -81,12 +90,15 @@ TEXTURE* LoadTexture(const char* fname)
 int ReadTexel(float u, float v)
 {
 	int color = 0xffffffff;
-	int tu = (int)(u * texture->w);
-	int tv = (int)(v * texture->h);
+	int x = (int)(u * texture->w);
+	int y = (int)(v * texture->h);
 
-	char b = texture->image[tv * texture->pitch + tu * 3 + 0];
-	char g = texture->image[tv * texture->pitch + tu * 3 + 1];
-	char r = texture->image[tv * texture->pitch + tu * 3 + 2];
+	int b = texture->image[y * texture->pitch + (x * 3 + 0)];
+	int g = texture->image[y * texture->pitch + (x * 3 + 1)];
+	int r = texture->image[y * texture->pitch + (x * 3 + 2)];
+
+	if (b > 0)
+		b = b;
 
 	//memcpy(&color, texture->image + tv * texture->pitch + tu * 3, 3);
 	color = r << 24 | g << 16 | b << 8 | 0xff;
@@ -139,8 +151,9 @@ void DrawLine(int x0, int y0, int x1, int y1)
 		if (e2 < dy) { err += dx; y0 += sy; }
 	}
 }
-
 /*
+
+
 void DrawFlatTop(const Vec3& v0, const Vec3& v1, const Vec3& v2)
 {
 	float m0 = (v2.x - v0.x) / (v2.y - v0.y);
@@ -231,11 +244,12 @@ void DrawTriangle(const Vec3& v0, const Vec3& v1, const Vec3& v2)
 		}
 	}
 }
-
 */
 
+
 // Half Space algorithms
-void triangle(const Vertex& v1, const Vertex& v2, const Vertex& v3)
+/*
+void DrawTriangle(const Vertex& v1, const Vertex& v2, const Vertex& v3)
 {
 	float y1 = v1.pos.y;   
 	float y2 = v2.pos.y;
@@ -264,12 +278,14 @@ void triangle(const Vertex& v1, const Vertex& v2, const Vertex& v3)
 				(x2 - x3) * (y - y2) - (y2 - y3) * (x - x2) > 0 &&
 				(x3 - x1) * (y - y3) - (y3 - y1) * (x - x3) > 0)
 			{
-// 				float u = 0;
-// 				float v = 0;
-				float u = ((x - minx) * (maxu - minu) / (maxx - minx)) + minu;
-				float v = ((y - miny) * (maxv - minv) / (maxy - miny)) + minv;
-// 				u = lerp(minx, x, t);
-// 				v = lerp(miny, y, t);
+				float t0 = (x - minx + 0.5f) / (maxx - minx);
+				float t1 = (y - miny + 0.5f) / (maxy - miny);
+
+ 				float u = lerp(minu, maxu, t0);
+ 				float v = lerp(minv, maxv, t1);
+
+// 				float u = ((x - minx) * (maxu - minu) / (maxx - minx)) + minu;
+// 				float v = ((y - miny) * (maxv - minv) / (maxy - miny)) + minv;
 
 				//int color = 0xffffffff;
 				int color = ReadTexel(u, v);
@@ -279,6 +295,63 @@ void triangle(const Vertex& v1, const Vertex& v2, const Vertex& v3)
 		}
 	}
 }
+*/
+
+float edgeFunction(const Vec3& a, const Vec3& b, const Vec3& c)
+{
+	return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
+}
+
+void DrawTriangle(const Vertex& v1, const Vertex& v2, const Vertex& v3)
+{
+	float y1 = v1.pos.y;
+	float y2 = v2.pos.y;
+	float y3 = v3.pos.y;
+
+	float x1 = v1.pos.x;
+	float x2 = v2.pos.x;
+	float x3 = v3.pos.x;
+
+	int minx = (int)min(min(x1, x2), x3);
+	int maxx = (int)max(max(x1, x2), x3);
+	int miny = (int)min(min(y1, y2), y3);
+	int maxy = (int)max(max(y1, y2), y3);
+
+	float minu = min(min(v1.uv.u, v2.uv.u), v3.uv.u);
+	float maxu = max(max(v1.uv.u, v2.uv.u), v3.uv.u);
+	float minv = min(min(v1.uv.v, v2.uv.v), v3.uv.v);
+	float maxv = max(max(v1.uv.v, v2.uv.v), v3.uv.v);
+
+	float area = edgeFunction(v1.pos, v2.pos, v3.pos);
+
+	for (int y = miny; y < maxy; y++)
+	{
+		for (int x = minx; x < maxx; x++)
+		{
+			if ((x1 - x2) * (y - y1) - (y1 - y2) * (x - x1) > 0 &&
+				(x2 - x3) * (y - y2) - (y2 - y3) * (x - x2) > 0 &&
+				(x3 - x1) * (y - y3) - (y3 - y1) * (x - x3) > 0)
+			{
+				Vec3 p((float)x, (float)y, 0);
+				float w0 = edgeFunction(v2.pos, v3.pos, p);
+				float w1 = edgeFunction(v3.pos, v1.pos, p);
+				float w2 = edgeFunction(v1.pos, v2.pos, p);
+
+				w0 /= area;
+				w1 /= area;
+				w2 /= area;
+
+				float u = v1.uv.u * w0 + v2.uv.u * w1 + v3.uv.u * w2;
+				float v = v1.uv.v * w0 + v2.uv.v * w1 + v3.uv.v * w2;
+				int color = ReadTexel(u, v);
+				DrawPoint(x, y, color);
+			}
+		}
+	}
+}
+
+
+
 
 ////////////////////////////////////////////////////////////////////////
 
@@ -302,10 +375,30 @@ void InitTriangle()
 	vertise[2].pos.z = 0;
 	vertise[2].uv.u = 1;
 	vertise[2].uv.v = 1;
+
+	/// 
+
+	vertise2[0].pos.x = -1;
+	vertise2[0].pos.y = 1;
+	vertise2[0].pos.z = 0;
+	vertise2[0].uv.u = 0;
+	vertise2[0].uv.v = 1;
+
+	vertise2[1].pos.x = 0;
+	vertise2[1].pos.y = -1;
+	vertise2[1].pos.z = 0;
+	vertise2[1].uv.u = 0.5f;
+	vertise2[1].uv.v = 0;
+
+	vertise2[2].pos.x = 1;
+	vertise2[2].pos.y = 1;
+	vertise2[2].pos.z = 0;
+	vertise2[2].uv.u = 1;
+	vertise2[2].uv.v = 1;
 }
 
-float r = 0;
-void RenderTriangle()
+
+void RenderTriangle(Vertex *vertex, float r)
 {
 	Vec3 out[NUMOFVERTEX];
 	Vec4 pos;
@@ -313,16 +406,13 @@ void RenderTriangle()
 	MAT rot;
 		
 	Identity(&rot);
-	//MatrixRotationY(&rot, (r+=1) * _DEGREE);
-	MatRotate(&rot, 0, 0, 1, (r++) * _DEGREE);
+	//MatrixRotationY(&rot, r * _DEGREE);
+	MatRotate(&rot, 1, 1, 1, r * _DEGREE);
 
 	Vec3 tri[NUMOFVERTEX];
 	for (int i = 0; i < NUMOFVERTEX; i++)
-		tri[i] = rot * vertise[i].pos;
-		//Transform(&tri[i], vertise[i].pos, rot);
+		tri[i] = rot * vertex[i].pos;
 
-	//Multiply(&final, view, proj);
-	//Multiply(&final, final, viewport);
 	final = view * proj * viewport;
 
 	for (int i = 0; i < NUMOFVERTEX; i++)
@@ -337,24 +427,24 @@ void RenderTriangle()
 // 		DrawLine(out[1].x, out[1].y, out[2].x, out[2].y);
 // 		DrawLine(out[2].x, out[2].y, out[0].x, out[0].y);
 
-	//DrawTriangle(out[0], out[1], out[2]);
 	Vertex t[NUMOFVERTEX];
 	t[0].pos = out[0];
-	t[0].uv = vertise[0].uv;
+	t[0].uv = vertex[0].uv;
 
 	t[1].pos = out[1];
-	t[1].uv = vertise[1].uv;
+	t[1].uv = vertex[1].uv;
 
 	t[2].pos = out[2];
-	t[2].uv = vertise[2].uv;
+	t[2].uv = vertex[2].uv;
 
-	triangle(t[0], t[1], t[2]);
+	//DrawTriangle(out[0], out[1], out[2]);
 
-	//float z = pos.z / pos.w;
-	int color = 0x00FF00FF;
-	DrawPoint((int)out[0].x, (int)out[0].y, color);
-	DrawPoint((int)out[1].x, (int)out[1].y, color);
-	DrawPoint((int)out[2].x, (int)out[2].y, color);
+	DrawTriangle(t[0], t[1], t[2]);
+
+// 	int color = 0x00FF00FF;
+// 	DrawPoint((int)out[0].x, (int)out[0].y, color);
+// 	DrawPoint((int)out[1].x, (int)out[1].y, color);
+// 	DrawPoint((int)out[2].x, (int)out[2].y, color);
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -384,6 +474,9 @@ int main(int argc, char* argv[])
 
 	InitRenderer();
 	InitTriangle();
+
+	float r = 0;
+	float r1 = 180;
 
 	while (1)
 	{
@@ -445,7 +538,10 @@ int main(int argc, char* argv[])
 
 		memset((char*)screenbuffer, 0, sizeof(int) * SCREEN_XSIZE * SCREEN_YSIZE);
 		
-		RenderTriangle();
+		RenderTriangle(vertise, r);
+		r++;
+		RenderTriangle(vertise2, r1);
+		r1+=2;
 
 		SDL_RenderClear(renderer);
 		SDL_UpdateTexture(screen_texture, NULL, screenbuffer, SCREEN_XSIZE * 4);
