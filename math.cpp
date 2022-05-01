@@ -103,38 +103,35 @@ void Multiply(MAT* pOut, const MAT& m1, const MAT& m2)
 // view
 void MatrixLookAtLH(MAT* out, const Vec3& eye, const Vec3& at, const Vec3& up)
 {
-	Vec3 forward;
-	Subtract(&forward, at, eye);
-	Normalize(&forward);
+	Vec3 zaxis; // forward;
+	zaxis = at-eye;
+	Normalize(&zaxis);
 
-	Vec3 _up;
-	_up.x = 0;	_up.y = 1;	_up.z = 0;
+	Vec3 _up(0,1,0);
 
-	Vec3 right;
-	Cross(&right, _up, forward);
-	Normalize(&right);
+	Vec3 xaxis;// right;
+	Cross(&xaxis, _up, zaxis);
+	Normalize(&xaxis);
 
-	Vec3 upVector;
-	Cross(&upVector, forward, right);
-	Normalize(&upVector);
+	Vec3 yaxis;//upVector;
+	Cross(&yaxis, zaxis, xaxis);
+	Normalize(&yaxis);
 
-	out->_11 = right.x;
-	out->_21 = right.y;
-	out->_31 = right.z;
-	//out->_41 = eye.x;
-	out->_41 = -Dot(right, eye);
+	out->_11 = xaxis.x;
+	out->_21 = xaxis.y;
+	out->_31 = xaxis.z;
+	// http://egloos.zum.com/EireneHue/v/984622
+	out->_41 = -Dot(xaxis, eye);
 
-	out->_12 = up.x;
-	out->_22 = up.y;
-	out->_32 = up.z;
-	//out->_42 = eye.y;
-	out->_42 = -Dot(up, eye);
+	out->_12 = yaxis.x;
+	out->_22 = yaxis.y;
+	out->_32 = yaxis.z;
+	out->_42 = -Dot(yaxis, eye);
 
-	out->_13 = forward.x;
-	out->_23 = forward.y;
-	out->_33 = forward.z;
-	//out->_43 = eye.z;
-	out->_43 = -Dot(forward, eye);
+	out->_13 = zaxis.x;
+	out->_23 = zaxis.y;
+	out->_33 = zaxis.z;
+	out->_43 = -Dot(zaxis, eye);
 
 	out->_14 = 0;
 	out->_24 = 0;

@@ -3,6 +3,8 @@
 
 #pragma warning(disable: 4996)
 
+#include "math.h"
+
 #define AppName "SOFTWARE-RENDERER"
 #define SCREEN_XSIZE	640
 #define SCREEN_YSIZE	480
@@ -25,6 +27,23 @@ struct TEXTURE
 	unsigned char* image;
 };
 
+struct UV
+{
+	float u, v;
+};
+
+struct Vertex
+{
+	Vec3 pos;
+	UV uv;
+};
+
+struct Face
+{
+	int vertex;
+	int uv;
+	int normal;
+};
 
 
 #endif

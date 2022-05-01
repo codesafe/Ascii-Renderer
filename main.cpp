@@ -12,7 +12,7 @@
 #include "predef.h"
 #include "math.h"
 #include "renderer.h"
-
+#include "model.h"
 
 
 #pragma comment (lib,"SDL2.lib")
@@ -46,6 +46,7 @@ Vertex vertise[NUMOFVERTEX];
 Vertex vertise2[NUMOFVERTEX];
 
 TEXTURE *texture;
+Model* model;
 
 char gradientTbl2[] = { "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. " };
 char gradientTbl[] = { 36, 64, 66, 37, 56, 38, 87, 77, 35, 42, 111, 97, 104, 107, 98, 100, 112, 113, 119,
@@ -138,6 +139,9 @@ void InitRenderer()
 	zbuffer = new float[SCREEN_XSIZE * SCREEN_YSIZE];
 
 	texture = LoadTexture("texture.bmp");
+
+	model = new Model();
+	model->LoadModel("cube-tex.obj");
 }
 
 void DrawPoint(int x, int y, float z, int color)
@@ -239,19 +243,19 @@ void InitTriangle()
 
 	vertise2[0].pos.x = 0;
 	vertise2[0].pos.y = 1;
-	vertise2[0].pos.z = 0;
+	vertise2[0].pos.z = 0.1f;
 	vertise2[0].uv.u = 0;
 	vertise2[0].uv.v = 1;
 
 	vertise2[1].pos.x = -1;
 	vertise2[1].pos.y = -1;
-	vertise2[1].pos.z = 0;
+	vertise2[1].pos.z = 0.1f;
 	vertise2[1].uv.u = 0.5f;
 	vertise2[1].uv.v = 0;
 
 	vertise2[2].pos.x = 1;
 	vertise2[2].pos.y = -1;
-	vertise2[2].pos.z = 0;
+	vertise2[2].pos.z = 0.1f;
 	vertise2[2].uv.u = 1;
 	vertise2[2].uv.v = 1;
 }
@@ -265,7 +269,7 @@ void RenderTriangle(Vertex *vertex, float r)
 	MAT rot;
 		
 	Identity(&rot);
-	MatrixRotationY(&rot, r * _DEGREE);
+	MatrixRotationZ(&rot, r * _DEGREE);
 	//MatRotate(&rot, 1, 1, 1, r * _DEGREE);
 
 	Vec3 tri[NUMOFVERTEX];
@@ -367,6 +371,7 @@ int main(int argc, char* argv[])
 
 					case SDLK_LEFT:
 						eye.x -= 0.1f;
+						at.x -= 0.1f;
 						Identity(&view);
 						MatrixLookAtLH(&view, eye, at, up);
 						printf("EYE X %f \n", eye.x);
@@ -374,6 +379,7 @@ int main(int argc, char* argv[])
 
 					case SDLK_RIGHT:
 						eye.x += 0.1f;
+						at.x += 0.1f;
 						Identity(&view);
 						MatrixLookAtLH(&view, eye, at, up);
 						printf("EYE X %f \n", eye.x);

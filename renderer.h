@@ -1,23 +1,23 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#include "math.h"
+#include "predef.h"
+#include "raster.h"
 
-struct UV
-{ 
-	float u, v; 
-};
-
-struct Vertex
+class Renderer
 {
-	Vec3 pos; 
-	UV uv; 
-	//int color; 
-	//float rhw;
+private:
+	Raster raster;
+
+public :
+	Renderer();
+	~Renderer();
+
+	void Draw_Triangle(Vertex& v0, Vertex& v1, Vertex& v2);
 };
 
 
-void Draw_Triangle(Vertex &v0, Vertex& v1, Vertex& v2);
+
 
 
 #endif

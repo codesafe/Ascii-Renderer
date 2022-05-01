@@ -1,5 +1,5 @@
+#include "predef.h"
 #include "model.h"
-
 
 Model::Model()
 {
@@ -18,29 +18,39 @@ Model::~Model()
 
 bool Model::LoadModel(const char* fname)
 {
-// 	FILE* fp = fopen(fname, "rt");
-// 	int i;
-// 	if (fp == NULL)
-// 		return false;
-// 
-// 	fscanf(fp, "%d", &vertexnum);
-// 
-// 	vertex = new Vertex[vertexnum];
-// 	for (i = 0; i < vertexnum; i++)
-// 	{
-// 		vertex[i].diffuse = 0xFFFFFFFF;
-// 
-// 		fscanf(fp, "%f %f %f %f %f %f %f %f",
-// 			&vertex[i].v.x, &vertex[i].v.y, &vertex[i].v.z,
-// 			&vertex[i].uv.u, &vertex[i].uv.v,
-// 			&vertex[i].normal.x, &vertex[i].normal.y, &vertex[i].normal.z);
-// 	}
-// 
-// 	fscanf(fp, "%d", &facenum);
-// 	face = new unsigned short[facenum * 3];
-// 	for (i = 0; i < facenum * 3; i += 3)
-// 		fscanf(fp, "%d %d %d", &face[i + 0], &face[i + 1], &face[i + 2]);
-// 
-// 	fclose(fp);
+	char dummy[4];
+	FILE* fp = fopen(fname, "rt");
+	int i;
+	if (fp == NULL)
+		return false;
+
+	// vertex
+	int ret = fscanf(fp, "%d", &vertexnum);
+	vertex = new Vec3[vertexnum];
+	for (i = 0; i < vertexnum; i++)
+		ret = fscanf(fp, "%s %f %f %f", dummy, &vertex[i].x, &vertex[i].y, &vertex[i].z);
+
+	// uv
+	ret = fscanf(fp, "%d", &uvnum);
+	uv = new UV[uvnum];
+	for (i = 0; i < uvnum; i++)
+		ret = fscanf(fp, "%s %f %f", dummy, &uv[i].u, &uv[i].v);
+
+	// normal
+	ret = fscanf(fp, "%d", &normalnum);
+	normal = new Vec3[normalnum];
+	for (i = 0; i < normalnum; i++)
+		ret = fscanf(fp, "%s %f %f %f", dummy, &normal[i].x, &normal[i].y, &normal[i].z);
+
+	ret = fscanf(fp, "%d", &facenum);
+	face = new Face[facenum * 3];
+	for (i = 0; i < facenum * 3; i += 3)
+		fscanf(fp, "%s %d/%d/%d %d/%d/%d %d/%d/%d", 
+			dummy,
+			&face[i].vertex, &face[i].uv, &face[i].normal,
+			&face[i + 1].vertex, &face[i + 1].uv, &face[i + 1].normal,
+			&face[i + 2].vertex, &face[i + 2].uv, &face[i + 2].normal);
+
+	fclose(fp);
 	return true;
 }

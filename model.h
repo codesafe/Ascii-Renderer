@@ -1,36 +1,22 @@
 #ifndef MODEL_H
 #define MODEL_H
 
-#include "math.h"
-
-struct UV
-{ 
-	float u, v; 
-};
-
-struct Vertex
-{
-	Vec3 v; 
-	Vec3 normal;
-	unsigned long diffuse;
-	UV uv; 
-};
-
-struct Face
-{
-	int vertex;
-	int uv;
-	int normal;
-};
+#include "predef.h"
+#include "renderer.h"
 
 
 class Model
 {
 public:
 	int vertexnum;
+	int normalnum;
 	int facenum;
-	Vertex* vertex;
-	unsigned short* face;
+	int uvnum;
+
+	Vec3* vertex;
+	Vec3* normal;
+	UV *uv;
+	Face* face;
 
 	Model();
 	~Model();
