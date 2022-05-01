@@ -145,10 +145,12 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="math.cpp" />
+    <ClCompile Include="model.cpp" />
     <ClCompile Include="renderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="math.h" />
+    <ClInclude Include="model.h" />
     <ClInclude Include="predef.h" />
     <ClInclude Include="renderer.h" />
   </ItemGroup>
