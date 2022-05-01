@@ -27,6 +27,8 @@
 
 ////////////////////////////////////////////////////////////////////////////////////
 
+float* zbuffer = nullptr;
+
 unsigned int* screenbuffer = nullptr;
 float aspect = (float)SCREEN_XSIZE / (float)SCREEN_YSIZE;
 float fov = 45.f ;
@@ -42,6 +44,7 @@ Vec3 up;
 
 Vertex vertise[NUMOFVERTEX];
 Vertex vertise2[NUMOFVERTEX];
+
 TEXTURE *texture;
 
 char gradientTbl2[] = { "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. " };
@@ -54,6 +57,13 @@ char gradientTbl[] = { 36, 64, 66, 37, 56, 38, 87, 77, 35, 42, 111, 97, 104, 107
 
 ////////////////////////////////////////////////////////////////////////
 
+void ClearScreen()
+{
+	memset((char*)screenbuffer, 0, sizeof(int) * SCREEN_XSIZE * SCREEN_YSIZE);
+
+	for (int i = 0; i < SCREEN_XSIZE * SCREEN_YSIZE; i++)
+		zbuffer[i] = 1.0f; // -1 ~ +1
+}
 
 TEXTURE* LoadTexture(const char* fname)
 {
@@ -121,181 +131,26 @@ void InitRenderer()
 	MatrixPerspectiveFovLH(&proj, fov*_DEGREE, aspect, MIN_Z, MAX_Z);
 
 	Identity(&viewport);
-	MatrixSetViewPort(&viewport, 0, 0, SCREEN_XSIZE, SCREEN_YSIZE);
+	// 0 ~ 1로 하던가 -1 ~ +1
+	MatrixSetViewPort(&viewport, 0, 0, SCREEN_XSIZE, SCREEN_YSIZE, 0, 1);
 	
 	screenbuffer = new unsigned int[SCREEN_XSIZE * SCREEN_YSIZE * 4];
+	zbuffer = new float[SCREEN_XSIZE * SCREEN_YSIZE];
 
 	texture = LoadTexture("texture.bmp");
 }
 
-
-
-void DrawPoint(int x, int y, int color)
+void DrawPoint(int x, int y, float z, int color)
 {
 	if (x > SCREEN_XSIZE || x < 0) return;
 	if (y > SCREEN_YSIZE || y < 0) return;
 
-	screenbuffer[x + y * SCREEN_XSIZE] = color;
-}
-
-void DrawLine(int x0, int y0, int x1, int y1)
-{
-	int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
-	int dy = abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
-	int err = (dx > dy ? dx : -dy) / 2;
-
-	while (DrawPoint(x0, y0, 0xFFFFFFFF), x0 != x1 || y0 != y1) 
+	if (zbuffer[x + y * SCREEN_XSIZE] >= z)
 	{
-		int e2 = err;
-		if (e2 > -dx) { err -= dy; x0 += sx; }
-		if (e2 < dy) { err += dx; y0 += sy; }
+		screenbuffer[(int)x + (int)y * SCREEN_XSIZE] = color;
+		zbuffer[x + y * SCREEN_XSIZE] = z;
 	}
 }
-/*
-
-
-void DrawFlatTop(const Vec3& v0, const Vec3& v1, const Vec3& v2)
-{
-	float m0 = (v2.x - v0.x) / (v2.y - v0.y);
-	float m1 = (v2.x - v1.x) / (v2.y - v1.y);
-
-	int ys = (int)ceil(v0.y - 0.5f);	// y start
-	int ye = (int)ceil(v2.y - 0.5f);	// y end
-
-	for (int y = ys; y < ye; y++)
-	{
-		float px0 = m0 * (float(y) + 0.5f - v0.y) + v0.x;
-		float px1 = m1 * (float(y) + 0.5f - v1.y) + v1.x;
-
-// 		int xs = (int)ceil(px0 - 0.5f);	// x start
-// 		int xe = (int)ceil(px1 - 0.5f);	// x end
-
-		int xs = (int)(px0 - 0.5f);	// x start
-		int xe = (int)(px1 - 0.5f);	// x end
-
-		for (int x = xs; x < xe; x++)
-		{
-			DrawPoint(x, y, 0xFFFFFFFF);
-		}
-	}
-}
-
-
-void DrawFlatBottom(const Vec3& v0, const Vec3& v1, const Vec3& v2)
-{
-	float m0 = (v1.x - v0.x) / (v1.y - v0.y);
-	float m1 = (v2.x - v0.x) / (v2.y - v0.y);
-
-	const int ys = (int)ceil(v0.y - 0.5f);
-	const int ye = (int)ceil(v2.y - 0.5f);
-
-	for (int y = ys; y < ye; y++)
-	{
-		float px0 = m0 * (float(y) + 0.5f - v0.y) + v0.x;
-		float px1 = m1 * (float(y) + 0.5f - v0.y) + v0.x;
-
-		//int xs = (int)ceil(px0 - 0.5f);
-		//int xe = (int)ceil(px1 - 0.5f);
-		int xs = (int)(px0 - 0.5f);
-		int xe = (int)(px1 - 0.5f);
-
-		for (int x = xs; x < xe; x++)
-		{
-			DrawPoint(x, y, 0x00FFFFFF);
-		}
-	}
-}
-
-
-void DrawTriangle(const Vec3& v0, const Vec3& v1, const Vec3& v2)
-{
-	const Vec3* pv0 = &v0;
-	const Vec3* pv1 = &v1;
-	const Vec3* pv2 = &v2;
-
-	if (pv1->y < pv0->y) std::swap(pv0, pv1);
-	if (pv2->y < pv1->y) std::swap(pv1, pv2);
-	if (pv1->y < pv0->y) std::swap(pv0, pv1);
-
-	if (pv0->y == pv1->y)
-	{
-		if (pv1->x < pv0->x) std::swap(pv0, pv1);
-		DrawFlatTop(*pv0, *pv1, *pv2);
-	}
-	else if (pv1->y == pv2->y)
-	{
-		if (pv2->x < pv1->x) std::swap(pv1, pv2);
-		DrawFlatBottom(*pv0, *pv1, *pv2);
-	}
-	else
-	{
-		const float alphaSplit = (pv1->y - pv0->y) / (pv2->y - pv0->y);
-		const Vec3 vi = *pv0 + (*pv2 - *pv0) * alphaSplit;
-
-		if (pv1->x < vi.x) // major right
-		{
-			DrawFlatBottom(*pv0, *pv1, vi);
-			DrawFlatTop(*pv1, vi, *pv2);
-		}
-		else // major left
-		{
-			DrawFlatBottom(*pv0, vi, *pv1);
-			DrawFlatTop(vi, *pv1, *pv2);
-		}
-	}
-}
-*/
-
-
-// Half Space algorithms
-/*
-void DrawTriangle(const Vertex& v1, const Vertex& v2, const Vertex& v3)
-{
-	float y1 = v1.pos.y;   
-	float y2 = v2.pos.y;
-	float y3 = v3.pos.y;
-
-	float x1 = v1.pos.x;
-	float x2 = v2.pos.x;
-	float x3 = v3.pos.x;
-
-	int minx = (int)min(min(x1, x2), x3);
-	int maxx = (int)max(max(x1, x2), x3);
-	int miny = (int)min(min(y1, y2), y3);
-	int maxy = (int)max(max(y1, y2), y3);
-
-	float minu = min(min(v1.uv.u, v2.uv.u), v3.uv.u);
-	float maxu = max(max(v1.uv.u, v2.uv.u), v3.uv.u);
-	float minv = min(min(v1.uv.v, v2.uv.v), v3.uv.v);
-	float maxv = max(max(v1.uv.v, v2.uv.v), v3.uv.v);
-
-
-	for (int y = miny; y < maxy; y++)
-	{
-		for (int x = minx; x < maxx; x++)
-		{
-			if ((x1 - x2) * (y - y1) - (y1 - y2) * (x - x1) > 0 &&
-				(x2 - x3) * (y - y2) - (y2 - y3) * (x - x2) > 0 &&
-				(x3 - x1) * (y - y3) - (y3 - y1) * (x - x3) > 0)
-			{
-				float t0 = (x - minx + 0.5f) / (maxx - minx);
-				float t1 = (y - miny + 0.5f) / (maxy - miny);
-
- 				float u = lerp(minu, maxu, t0);
- 				float v = lerp(minv, maxv, t1);
-
-// 				float u = ((x - minx) * (maxu - minu) / (maxx - minx)) + minu;
-// 				float v = ((y - miny) * (maxv - minv) / (maxy - miny)) + minv;
-
-				//int color = 0xffffffff;
-				int color = ReadTexel(u, v);
-
-				DrawPoint(x, y, color);
-			}
-		}
-	}
-}
-*/
 
 float edgeFunction(const Vec3& a, const Vec3& b, const Vec3& c)
 {
@@ -324,6 +179,9 @@ void DrawTriangle(const Vertex& v1, const Vertex& v2, const Vertex& v3)
 
 	float area = edgeFunction(v1.pos, v2.pos, v3.pos);
 
+	maxx = maxx > SCREEN_XSIZE ? SCREEN_XSIZE : maxx;
+	maxy = maxy > SCREEN_YSIZE ? SCREEN_YSIZE : maxy;
+
 	for (int y = miny; y < maxy; y++)
 	{
 		for (int x = minx; x < maxx; x++)
@@ -343,8 +201,9 @@ void DrawTriangle(const Vertex& v1, const Vertex& v2, const Vertex& v3)
 
 				float u = v1.uv.u * w0 + v2.uv.u * w1 + v3.uv.u * w2;
 				float v = v1.uv.v * w0 + v2.uv.v * w1 + v3.uv.v * w2;
+				float z = v1.pos.z * w0 + v2.pos.z * w1 + v3.pos.z * w2;
 				int color = ReadTexel(u, v);
-				DrawPoint(x, y, color);
+				DrawPoint(x, y, z, color);
 			}
 		}
 	}
@@ -378,20 +237,20 @@ void InitTriangle()
 
 	/// 
 
-	vertise2[0].pos.x = -1;
+	vertise2[0].pos.x = 0;
 	vertise2[0].pos.y = 1;
 	vertise2[0].pos.z = 0;
 	vertise2[0].uv.u = 0;
 	vertise2[0].uv.v = 1;
 
-	vertise2[1].pos.x = 0;
+	vertise2[1].pos.x = -1;
 	vertise2[1].pos.y = -1;
 	vertise2[1].pos.z = 0;
 	vertise2[1].uv.u = 0.5f;
 	vertise2[1].uv.v = 0;
 
 	vertise2[2].pos.x = 1;
-	vertise2[2].pos.y = 1;
+	vertise2[2].pos.y = -1;
 	vertise2[2].pos.z = 0;
 	vertise2[2].uv.u = 1;
 	vertise2[2].uv.v = 1;
@@ -406,14 +265,14 @@ void RenderTriangle(Vertex *vertex, float r)
 	MAT rot;
 		
 	Identity(&rot);
-	//MatrixRotationY(&rot, r * _DEGREE);
-	MatRotate(&rot, 1, 1, 1, r * _DEGREE);
+	MatrixRotationY(&rot, r * _DEGREE);
+	//MatRotate(&rot, 1, 1, 1, r * _DEGREE);
 
 	Vec3 tri[NUMOFVERTEX];
 	for (int i = 0; i < NUMOFVERTEX; i++)
 		tri[i] = rot * vertex[i].pos;
 
-	final = view * proj * viewport;
+	final = view * proj *viewport;
 
 	for (int i = 0; i < NUMOFVERTEX; i++)
 	{
@@ -480,6 +339,8 @@ int main(int argc, char* argv[])
 
 	while (1)
 	{
+
+
 		SDL_Event event;
 		while (SDL_PollEvent(&event))
 		{
@@ -532,16 +393,13 @@ int main(int argc, char* argv[])
 			}
 		}
 
-// 		for (int y = 0; y < SCREEN_YSIZE; ++y)
-// 			for (int x = 0; x < SCREEN_XSIZE; ++x)
-// 				DrawPoint(x, y, 0xff0f0fff);
+		ClearScreen();
 
-		memset((char*)screenbuffer, 0, sizeof(int) * SCREEN_XSIZE * SCREEN_YSIZE);
-		
 		RenderTriangle(vertise, r);
 		r++;
+
+		r1 = r+90;
 		RenderTriangle(vertise2, r1);
-		r1+=2;
 
 		SDL_RenderClear(renderer);
 		SDL_UpdateTexture(screen_texture, NULL, screenbuffer, SCREEN_XSIZE * 4);
@@ -550,6 +408,7 @@ int main(int argc, char* argv[])
 	}
 
 	delete [] screenbuffer;
+	delete[] zbuffer;
 	
 	return 0;
 }
