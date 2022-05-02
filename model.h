@@ -2,7 +2,6 @@
 #define MODEL_H
 
 #include "predef.h"
-#include "renderer.h"
 
 
 class Model

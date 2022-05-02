@@ -3,17 +3,28 @@
 
 #include "predef.h"
 #include "raster.h"
+#include "model.h"
 
 class Renderer
 {
 private:
 	Raster raster;
+	Model model;
+
+	MAT view;
+	MAT proj;
+	MAT viewport;	// view port
 
 public :
 	Renderer();
 	~Renderer();
 
-	void Draw_Triangle(Vertex& v0, Vertex& v1, Vertex& v2);
+	unsigned int* getscreenbuffer();
+
+	void init();
+	void clearscreen();
+	void render();
+
 };
 
 

@@ -47,7 +47,7 @@ bool Model::LoadModel(const char* fname)
 	for (i = 0; i < facenum * 3; i += 3)
 		fscanf(fp, "%s %d/%d/%d %d/%d/%d %d/%d/%d", 
 			dummy,
-			&face[i].vertex, &face[i].uv, &face[i].normal,
+			&face[i + 0].vertex, &face[i + 0].uv, &face[i + 0].normal,
 			&face[i + 1].vertex, &face[i + 1].uv, &face[i + 1].normal,
 			&face[i + 2].vertex, &face[i + 2].uv, &face[i + 2].normal);
 
