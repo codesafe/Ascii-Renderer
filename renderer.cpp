@@ -12,7 +12,8 @@ Renderer::~Renderer()
 void Renderer::init()
 {
 	raster.init();
-	model.LoadModel("cube-tex.obj");
+	//model.LoadModel("cube-tex.obj");
+	model.LoadModel("b.obj");
 
 	float aspect = (float)SCREEN_XSIZE / (float)SCREEN_YSIZE;
 	float fov = 45.f;
@@ -55,9 +56,9 @@ void Renderer::render()
 	Identity(&rot);
 	Identity(&rot2);
 	MatrixRotationY(&rot, r * _DEGREE);
-	MatrixRotationX(&rot2, r * _DEGREE * 1.5f);
+	//MatrixRotationX(&rot2, r * _DEGREE * 1.f);
 	rot = rot * rot2;
-	r += 1.1f;
+	r += 0.5f;
 
 	for (int i = 0; i < model.facenum * 3; i+=3)
 	{

@@ -6,7 +6,6 @@
 
 #include "raster.h"
 
-
 Raster::Raster()
 {
 	screenbuffer = nullptr;
@@ -43,11 +42,29 @@ void Raster::drawpoint(int x, int y, float z, int color)
 	if (x > SCREEN_XSIZE || x < 0) return;
 	if (y > SCREEN_YSIZE || y < 0) return;
 
+#ifndef DRAW_DEPTH
+
 	if (zbuffer[x + y * SCREEN_XSIZE] >= z)
 	{
 		screenbuffer[(int)x + (int)y * SCREEN_XSIZE] = color;
 		zbuffer[x + y * SCREEN_XSIZE] = z;
 	}
+#else
+
+	if (zbuffer[x + y * SCREEN_XSIZE] >= z)
+	{
+		//screenbuffer[(int)x + (int)y * SCREEN_XSIZE] = color;
+		zbuffer[x + y * SCREEN_XSIZE] = z;
+
+		z = z > 1 ? 1 : z;
+		z = z < 0 ? 0 : z;
+
+		int depth_color = (int)lerp(255, 0, z);
+		color = depth_color << 24 | depth_color << 16 | depth_color << 8 | 0xff;
+		screenbuffer[(int)x + (int)y * SCREEN_XSIZE] = color;
+	}
+
+#endif
 }
 
 
@@ -56,7 +73,7 @@ float Raster::edge(const Vec3& a, const Vec3& b, const Vec3& c)
 	return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
 }
 
-void Raster::drawtriangle(const Vertex& v1, const Vertex& v2, const Vertex& v3)
+void Raster::drawtriangle(Vertex& v1, Vertex& v2, Vertex& v3)
 {
 	float y1 = v1.pos.y;
 	float y2 = v2.pos.y;
@@ -66,10 +83,11 @@ void Raster::drawtriangle(const Vertex& v1, const Vertex& v2, const Vertex& v3)
 	float x2 = v2.pos.x;
 	float x3 = v3.pos.x;
 
-	int minx = (int)min(min(x1, x2), x3);
-	int maxx = (int)max(max(x1, x2), x3);
-	int miny = (int)min(min(y1, y2), y3);
-	int maxy = (int)max(max(y1, y2), y3);
+	// seem Á¦°Å
+	int minx = (int)ceil(min(min(x1, x2) - 0.5f, x3) - 0.5f);
+	int maxx = (int)ceil(max(max(x1, x2) + 0.5f, x3) + 0.5f);
+	int miny = (int)ceil(min(min(y1, y2) - 0.5f, y3) - 0.5f);
+	int maxy = (int)ceil(max(max(y1, y2) + 0.5f, y3) + 0.5f);
 
 	float minu = min(min(v1.uv.u, v2.uv.u), v3.uv.u);
 	float maxu = max(max(v1.uv.u, v2.uv.u), v3.uv.u);
@@ -85,15 +103,13 @@ void Raster::drawtriangle(const Vertex& v1, const Vertex& v2, const Vertex& v3)
 	{
 		for (int x = minx; x < maxx; x++)
 		{
-			if ((x1 - x2) * (y - y1) - (y1 - y2) * (x - x1) >= 0 &&
-				(x2 - x3) * (y - y2) - (y2 - y3) * (x - x2) >= 0 &&
-				(x3 - x1) * (y - y3) - (y3 - y1) * (x - x3) >= 0)
-			{
-				Vec3 p((float)x, (float)y, 0);
-				float w0 = edge(v2.pos, v3.pos, p);
-				float w1 = edge(v3.pos, v1.pos, p);
-				float w2 = edge(v1.pos, v2.pos, p);
+			Vec3 p((float)x, (float)y, 0);
+			float w0 = edge(v2.pos, v3.pos, p);
+			float w1 = edge(v3.pos, v1.pos, p);
+			float w2 = edge(v1.pos, v2.pos, p);
 
+			if (w0 >= 0 && w1 >= 0 && w2 >= 0)
+			{
 				w0 /= area;
 				w1 /= area;
 				w2 /= area;

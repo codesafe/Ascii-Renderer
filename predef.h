@@ -6,13 +6,17 @@
 #include "math.h"
 
 #define AppName "SOFTWARE-RENDERER"
-#define SCREEN_XSIZE	640
-#define SCREEN_YSIZE	480
-#define MIN_Z		0.1f
-#define MAX_Z		10
 
 #define	_PI			3.141592f
 #define _DEGREE		(3.141592f / 180.0f)
+
+#define SCREEN_XSIZE	320
+#define SCREEN_YSIZE	240
+#define MIN_Z		3
+#define MAX_Z		10
+
+#define ASCII_XSIZE		160
+#define ASCII_YSIZE		40
 
 #ifndef max
 #define max(a,b)            (((a) > (b)) ? (a) : (b))
@@ -22,6 +26,15 @@
 #define min(a,b)            (((a) < (b)) ? (a) : (b))
 #endif
 
+#define UNPACK_R(C)		(C & 0xFF000000) >> 24
+#define UNPACK_G(C)		(C & 0x00FF0000) >> 16
+#define UNPACK_B(C)		(C & 0x0000FF00) >> 8
+
+
+
+//#define DRAW_DEPTH
+#define ASCII_RENDER
+//#define ASCII_RENDER_ONLY
 
 struct TEXTURE
 {
