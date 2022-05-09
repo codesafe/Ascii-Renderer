@@ -10,10 +10,10 @@
 #define	_PI			3.141592f
 #define _DEGREE		(3.141592f / 180.0f)
 
-#define SCREEN_XSIZE	320
-#define SCREEN_YSIZE	240
+#define SCREEN_XSIZE	640
+#define SCREEN_YSIZE	360
 #define MIN_Z		3
-#define MAX_Z		10
+#define MAX_Z		100
 
 #define ASCII_XSIZE		160
 #define ASCII_YSIZE		40
@@ -33,7 +33,7 @@
 
 
 //#define DRAW_DEPTH
-#define ASCII_RENDER
+//#define ASCII_RENDER
 //#define ASCII_RENDER_ONLY
 
 struct TEXTURE
@@ -49,8 +49,10 @@ struct UV
 
 struct Vertex
 {
-	Vec3 pos;
+	Vec4 pos;
+	Vec3 normal;
 	UV uv;
+	float rhw;
 };
 
 struct Face

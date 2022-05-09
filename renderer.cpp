@@ -11,9 +11,15 @@ Renderer::~Renderer()
 
 void Renderer::init()
 {
+	light.pos = Vec3(0, 1, 0);
+	light.dir = Vec3(0, 0.5f, 0.5f);
+	Normalize(&light.dir);
+
+
 	raster.init();
-	//model.LoadModel("cube-tex.obj");
-	model.LoadModel("b.obj");
+	model.LoadModel("cube-tex.obj");
+	//model.LoadModel("b.obj");
+	//model.LoadModel("d.obj");
 
 	float aspect = (float)SCREEN_XSIZE / (float)SCREEN_YSIZE;
 	float fov = 45.f;
@@ -23,7 +29,7 @@ void Renderer::init()
 	Vec3 at;
 	Vec3 up;
 
-	eye.x = 0;	eye.y = 0;	eye.z = -5;
+	eye.x = 0;	eye.y = 0;	eye.z = -15;
 	at.x = 0;	at.y = 0;	at.z = 1;
 	up.x = 0;	up.y = 1;	up.z = 0;
 
@@ -59,6 +65,7 @@ void Renderer::render()
 	//MatrixRotationX(&rot2, r * _DEGREE * 1.f);
 	rot = rot * rot2;
 	r += 0.5f;
+	//r = 45;
 
 	for (int i = 0; i < model.facenum * 3; i+=3)
 	{
@@ -71,9 +78,7 @@ void Renderer::render()
 		int uv2 = model.face[i + 2].uv - 1;
 
 		Vertex v0, v1, v2;
-		//v0.pos = model.vertex[_v0];
-		//v1.pos = model.vertex[_v1];
-		//v2.pos = model.vertex[_v2];
+
 		v0.uv = model.uv[uv0];
 		v1.uv = model.uv[uv1];
 		v2.uv = model.uv[uv2];
@@ -91,8 +96,10 @@ void Renderer::render()
 		Transform4(&temp, t3, final);
 		PerspectiveDivide(&v2.pos, temp);
 
+		float bright = 1;
+
 		//raster.drawtriangle(v0, v1, v2);
-		raster.drawtriangle(v2, v1, v0);
+		raster.drawtriangle(v2, v1, v0, bright);
 	}
 	
 }

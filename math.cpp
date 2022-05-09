@@ -221,13 +221,14 @@ void Transform_Homogenize(Vec3 *out, Vec4 &in, float x, float y, float w, float 
 }
 
 // to ndc
-void PerspectiveDivide(Vec3* out, const Vec4 &in)
+void PerspectiveDivide(Vec4* out, const Vec4 &in)
 {
 	// x = x/w;
 	float rhw = 1 / in.w;
 	out->x = in.x * rhw;
 	out->y = in.y * rhw;
 	out->z = in.z * rhw;
+	out->w = in.w;
 }
 
 void MatRotate(MAT* m, float x, float y, float z, float theta) 

@@ -6,6 +6,8 @@
 
 #include "raster.h"
 
+#define PERSPETIVE_CORRECT
+
 Raster::Raster()
 {
 	screenbuffer = nullptr;
@@ -46,8 +48,11 @@ void Raster::drawpoint(int x, int y, float z, int color)
 
 	if (zbuffer[x + y * SCREEN_XSIZE] >= z)
 	{
-		screenbuffer[(int)x + (int)y * SCREEN_XSIZE] = color;
+		z = z > 1 ? 1 : z;
+		z = z < 0 ? 0 : z;
 		zbuffer[x + y * SCREEN_XSIZE] = z;
+		screenbuffer[(int)x + (int)y * SCREEN_XSIZE] = color;
+
 	}
 #else
 
@@ -68,12 +73,12 @@ void Raster::drawpoint(int x, int y, float z, int color)
 }
 
 
-float Raster::edge(const Vec3& a, const Vec3& b, const Vec3& c)
+float Raster::edge(const Vec4& a, const Vec4& b, const Vec4& c)
 {
 	return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
 }
 
-void Raster::drawtriangle(Vertex& v1, Vertex& v2, Vertex& v3)
+void Raster::drawtriangle(Vertex& v1, Vertex& v2, Vertex& v3, float bright)
 {
 	float y1 = v1.pos.y;
 	float y2 = v2.pos.y;
@@ -96,14 +101,33 @@ void Raster::drawtriangle(Vertex& v1, Vertex& v2, Vertex& v3)
 
 	float area = edge(v1.pos, v2.pos, v3.pos);
 
+	minx = minx < 0 ? 0 : minx;
+	miny = miny < 0 ? 0 : miny;
 	maxx = maxx > SCREEN_XSIZE ? SCREEN_XSIZE : maxx;
 	maxy = maxy > SCREEN_YSIZE ? SCREEN_YSIZE : maxy;
+
+#ifdef PERSPETIVE_CORRECT
+
+	v1.uv.u = v1.uv.u / v1.pos.w;
+	v1.uv.v = v1.uv.v / v1.pos.w;
+
+	v2.uv.u = v2.uv.u / v2.pos.w;
+	v2.uv.v = v2.uv.v / v2.pos.w;
+
+	v3.uv.u = v3.uv.u / v3.pos.w;
+	v3.uv.v = v3.uv.v / v3.pos.w;
+
+	v1.pos.w = 1.0f / v1.pos.w;
+	v2.pos.w = 1.0f / v2.pos.w;
+	v3.pos.w = 1.0f / v3.pos.w;
+
+#endif
 
 	for (int y = miny; y < maxy; y++)
 	{
 		for (int x = minx; x < maxx; x++)
 		{
-			Vec3 p((float)x, (float)y, 0);
+			Vec4 p((float)x, (float)y, 0, 1);
 			float w0 = edge(v2.pos, v3.pos, p);
 			float w1 = edge(v3.pos, v1.pos, p);
 			float w2 = edge(v1.pos, v2.pos, p);
@@ -114,10 +138,29 @@ void Raster::drawtriangle(Vertex& v1, Vertex& v2, Vertex& v3)
 				w1 /= area;
 				w2 /= area;
 
+#ifdef PERSPETIVE_CORRECT
+				float w = 1.0f / (v1.pos.w * w0 + v2.pos.w * w1 + v3.pos.w * w2);
+
 				float u = v1.uv.u * w0 + v2.uv.u * w1 + v3.uv.u * w2;
 				float v = v1.uv.v * w0 + v2.uv.v * w1 + v3.uv.v * w2;
 				float z = v1.pos.z * w0 + v2.pos.z * w1 + v3.pos.z * w2;
+
+				u *= w;
+				v *= w;
+
+#else
+				float u = v1.uv.u * w0 + v2.uv.u * w1 + v3.uv.u * w2;
+				float v = v1.uv.v * w0 + v2.uv.v * w1 + v3.uv.v * w2;
+				float z = v1.pos.z * w0 + v2.pos.z * w1 + v3.pos.z * w2;
+#endif
+
 				int color = readtexel(u, v);
+
+				int r = (int)((float)(UNPACK_R(color)) * bright);
+				int g = (int)((float)(UNPACK_G(color)) * bright);
+				int b = (int)((float)(UNPACK_B(color)) * bright);
+
+				color = (r << 24 | g << 16 | b << 8 | 0xff);
 				drawpoint(x, y, z, color);
 			}
 		}
@@ -126,6 +169,9 @@ void Raster::drawtriangle(Vertex& v1, Vertex& v2, Vertex& v3)
 
 int Raster::readtexel(float u, float v)
 {
+	if (u < 0 || u > 1) return 0x00ff00ff;
+	if (v < 0 || v > 1) return 0x00ff00ff;
+
 	int color = 0xffffffff;
 	int x = (int)(u * texture->w);
 	int y = (int)(v * texture->h);

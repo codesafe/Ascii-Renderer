@@ -168,7 +168,7 @@ void MatrixPerspectiveFovRH(MAT* out, float fovY, float aspect, float zn, float 
 
 void MatrixSetViewPort(MAT* out, float x, float y, float w, float h, float minz, float maxz);
 void Transform_Homogenize(Vec3* out, Vec4& in, float x, float y, float w, float h);
-void PerspectiveDivide(Vec3* out, const Vec4 &in);
+void PerspectiveDivide(Vec4* out, const Vec4 &in);
 
 
 ////////////////////////////////////////////////////////////////////////////////////

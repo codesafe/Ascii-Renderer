@@ -79,8 +79,6 @@ int main(int argc, char* argv[])
 
 	while (1)
 	{
-
-
 		SDL_Event event;
 		while (SDL_PollEvent(&event))
 		{
@@ -88,44 +86,26 @@ int main(int argc, char* argv[])
 
 			switch (event.type) 
 			{
-// 				case SDL_KEYDOWN:
-// 					switch (event.key.keysym.sym) 
-// 					{
-// 					case SDLK_UP:
-// 						fov++;
-// 						Identity(&proj);
-// 						MatrixPerspectiveFovLH(&proj, fov * _DEGREE, aspect, MIN_Z, MAX_Z);
-// 						printf("FOV %f \n", fov);
-// 						break;
-// 
-// 					case SDLK_DOWN:
-// 						fov--;
-// 						Identity(&proj);
-// 						MatrixPerspectiveFovLH(&proj, fov * _DEGREE, aspect, MIN_Z, MAX_Z);
-// 						printf("FOV %f \n", fov);
-// 						break;
-// 
-// 					case SDLK_LEFT:
-// 						eye.x -= 0.1f;
-// 						at.x -= 0.1f;
-// 						Identity(&view);
-// 						MatrixLookAtLH(&view, eye, at, up);
-// 						printf("EYE X %f \n", eye.x);
-// 						break;
-// 
-// 					case SDLK_RIGHT:
-// 						eye.x += 0.1f;
-// 						at.x += 0.1f;
-// 						Identity(&view);
-// 						MatrixLookAtLH(&view, eye, at, up);
-// 						printf("EYE X %f \n", eye.x);
-// 
-// 						break;
-// 
-// 					default:
-// 						break;
-// 					}
-// 					break;
+				case SDL_KEYDOWN:
+					switch (event.key.keysym.sym) 
+					{
+					case SDLK_UP:
+
+						break;
+
+					case SDLK_DOWN:
+						break;
+
+					case SDLK_LEFT:
+						break;
+
+					case SDLK_RIGHT:
+						break;
+
+					default:
+						break;
+					}
+					break;
 
 				case SDL_KEYUP:
 					break;

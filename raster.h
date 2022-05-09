@@ -18,9 +18,9 @@ public:
 	void clearscreen();
 	unsigned int* getscreenbuffer();
 
-	float edge(const Vec3& a, const Vec3& b, const Vec3& c);
+	float edge(const Vec4& a, const Vec4& b, const Vec4& c);
 	void drawpoint(int x, int y, float z, int color);
-	void drawtriangle(Vertex& v1, Vertex& v2, Vertex& v3);
+	void drawtriangle(Vertex& v1, Vertex& v2, Vertex& v3, float bright);
 	int readtexel(float u, float v);
 
 	TEXTURE* loadtexture(const char* fname);
