@@ -7,6 +7,8 @@
 #include "raster.h"
 
 #define PERSPETIVE_CORRECT
+#define BILINEAR_TEXTURE
+
 
 Raster::Raster()
 {
@@ -167,8 +169,65 @@ void Raster::drawtriangle(Vertex& v1, Vertex& v2, Vertex& v3, float bright)
 	}
 }
 
+int Raster::gettexturepixel(int x, int y)
+{
+	int color = 0xffffffff;
+
+	x = x < 0 ? 0 : x;
+	x = x > texture->w ? texture->w : x;
+	y = y < 0 ? 0 : y;
+	y = y > texture->h ? texture->h : y;
+
+	int b = texture->image[y * texture->pitch + (x * 3 + 0)];
+	int g = texture->image[y * texture->pitch + (x * 3 + 1)];
+	int r = texture->image[y * texture->pitch + (x * 3 + 2)];
+
+	color = PACK_RGB(r, g, b);
+	return color;
+}
+
 int Raster::readtexel(float u, float v)
 {
+#if 1
+
+#ifdef BILINEAR_TEXTURE
+	int x = (int)(u * texture->w);
+	int y = (int)(v * texture->h);
+
+	if (x >= texture->w) x = texture->w - 1;
+	if (y >= texture->h) y = texture->h - 1;
+
+	float wu, wv, w[2][2];
+	float r, g, b;
+	int c[2][2];
+
+	wu = (float)fmod(u * texture->w, 1.0f);
+	wv = (float)fmod(v * texture->h, 1.0f);
+
+	w[0][0] = (1.0f - wu) * (1.0f - wv);
+	w[0][1] = wu * (1.0f - wv);
+	w[1][0] = (1.0f - wu) * wv;
+	w[1][1] = wu * wv;
+
+	c[0][0] = gettexturepixel(x, y);
+	c[0][1] = gettexturepixel(x + 1, y);
+	c[1][0] = gettexturepixel(x, y + 1);
+	c[1][1] = gettexturepixel(x + 1, y + 1);
+
+	r = UNPACK_R(c[0][0]) * w[0][0] + UNPACK_R(c[0][1]) * w[0][1] + UNPACK_R(c[1][0]) * w[1][0] + UNPACK_R(c[1][1]) * w[1][1];
+	g = UNPACK_G(c[0][0]) * w[0][0] + UNPACK_G(c[0][1]) * w[0][1] + UNPACK_G(c[1][0]) * w[1][0] + UNPACK_G(c[1][1]) * w[1][1];
+	b = UNPACK_B(c[0][0]) * w[0][0] + UNPACK_B(c[0][1]) * w[0][1] + UNPACK_B(c[1][0]) * w[1][0] + UNPACK_B(c[1][1]) * w[1][1];
+
+	int color = PACK_RGB((int)r, (int)g, (int)b);
+	return color;
+#else
+	int x = (int)(u * texture->w);
+	int y = (int)(v * texture->h);
+	int color = gettexturepixel(x, y);
+	return color;
+#endif
+
+#else
 	if (u < 0 || u > 1) return 0x00ff00ff;
 	if (v < 0 || v > 1) return 0x00ff00ff;
 
@@ -183,6 +242,8 @@ int Raster::readtexel(float u, float v)
 	//memcpy(&color, texture->image + tv * texture->pitch + tu * 3, 3);
 	color = r << 24 | g << 16 | b << 8 | 0xff;
 	return color;
+
+#endif
 }
 
 

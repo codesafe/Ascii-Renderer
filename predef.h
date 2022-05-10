@@ -26,10 +26,11 @@
 #define min(a,b)            (((a) < (b)) ? (a) : (b))
 #endif
 
-#define UNPACK_R(C)		(C & 0xFF000000) >> 24
-#define UNPACK_G(C)		(C & 0x00FF0000) >> 16
-#define UNPACK_B(C)		(C & 0x0000FF00) >> 8
+#define UNPACK_R(C) (int)(( (C) >> 24 ) & 0xFF )
+#define UNPACK_G(C) (int)(( (C) >> 16 ) & 0xFF )
+#define UNPACK_B(C) (int)(( (C) >> 8 ) & 0xFF )
 
+#define PACK_RGB(r,g,b)	(r << 24 | g << 16 | b << 8 | 0xff)
 
 
 //#define DRAW_DEPTH

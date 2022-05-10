@@ -22,6 +22,7 @@ public:
 	void drawpoint(int x, int y, float z, int color);
 	void drawtriangle(Vertex& v1, Vertex& v2, Vertex& v3, float bright);
 	int readtexel(float u, float v);
+	int gettexturepixel(int x, int y);
 
 	TEXTURE* loadtexture(const char* fname);
 };

@@ -17,8 +17,8 @@ void Renderer::init()
 
 
 	raster.init();
-	model.LoadModel("cube-tex.obj");
-	//model.LoadModel("b.obj");
+	//model.LoadModel("cube-tex.obj");
+	model.LoadModel("b.obj");
 	//model.LoadModel("d.obj");
 
 	float aspect = (float)SCREEN_XSIZE / (float)SCREEN_YSIZE;
@@ -29,7 +29,7 @@ void Renderer::init()
 	Vec3 at;
 	Vec3 up;
 
-	eye.x = 0;	eye.y = 0;	eye.z = -15;
+	eye.x = 0;	eye.y = 0;	eye.z = -5;
 	at.x = 0;	at.y = 0;	at.z = 1;
 	up.x = 0;	up.y = 1;	up.z = 0;
 
