@@ -6,9 +6,10 @@
 
 #include "raster.h"
 
+//#define WIRE_FRAME
 #define PERSPETIVE_CORRECT
 #define BILINEAR_TEXTURE
-
+#define LIGHTING
 
 Raster::Raster()
 {
@@ -74,14 +75,92 @@ void Raster::drawpoint(int x, int y, float z, int color)
 #endif
 }
 
+void Raster::drawline(float x1, float y1, float x2, float y2, int color) 
+{
+	const bool steep = (fabs(y2 - y1) > fabs(x2 - x1));
+	if (steep) 
+	{
+		std::swap(x1, y1);
+		std::swap(x2, y2);
+	}
+
+	if (x1 > x2) {
+		std::swap(x1, x2);
+		std::swap(y1, y2);
+	}
+
+	float dx = x2 - x1;
+	float dy = fabsf(y2 - y1);
+
+	float error = dx / 2.0f;
+	const int ystep = (y1 < y2) ? 1 : -1;
+	int y = (int)y1;
+
+	const int maxX = (int)x2;
+
+	for (int x = (int)x1; x < maxX; x++) 
+	{
+		if (steep) 
+		{
+			drawpoint(y, x, 0, color);
+		}
+		else {
+			drawpoint(x, y, 0, color);
+		}
+
+		error -= dy;
+		if (error < 0) {
+			y += ystep;
+			error += dx;
+		}
+	}
+}
+
+void Raster::drawTriangleOutline(Vertex v0, Vertex v1, Vertex v2, int color) 
+{
+	float w = min(v0.pos.w, min(v1.pos.w, v2.pos.w));
+
+	if (w < 0)
+		return;
+
+	drawline(v0.pos.x, v0.pos.y, v1.pos.x, v1.pos.y, color);
+	drawline(v0.pos.x, v0.pos.y, v2.pos.x, v2.pos.y, color);
+	drawline(v1.pos.x, v1.pos.y, v2.pos.x, v2.pos.y, color);
+}
 
 float Raster::edge(const Vec4& a, const Vec4& b, const Vec4& c)
 {
 	return (c.x - a.x) * (b.y - a.y) - (c.y - a.y) * (b.x - a.x);
 }
 
+Vec3 Raster::getfacenormal(Vec3& v0, Vec3& v1, Vec3& v2)
+{
+	// Calculate triangle normal for backface culling
+	Vec3 s1 = v0 - v2;
+	Vec3 s2 = v0 - v1;
+
+	Vec3 facenormal;
+	Cross(&facenormal, s1, s2);
+	facenormal.norm();
+	return facenormal;
+}
+
 void Raster::drawtriangle(Vertex& v1, Vertex& v2, Vertex& v3, float bright)
 {
+	Vec3 p1 = Vec3(v1.pos);
+	Vec3 p2 = Vec3(v2.pos);
+	Vec3 p3 = Vec3(v3.pos);
+
+	// back face cull
+	Vec3 facenormal = getfacenormal(p1, p2, p3);
+	Vec3 t = Vec3(0, 0, 1.0f);
+	if (facenormal.dot(t) < 0)
+		return;
+
+#ifdef WIRE_FRAME
+	drawTriangleOutline(v1, v2, v3, 0xFFFFFFFF);
+#else
+
 	float y1 = v1.pos.y;
 	float y2 = v2.pos.y;
 	float y3 = v3.pos.y;
@@ -125,6 +204,30 @@ void Raster::drawtriangle(Vertex& v1, Vertex& v2, Vertex& v3, float bright)
 
 #endif
 
+#ifdef LIGHTING
+
+	float a = 1.0f / edge(v1.pos, v2.pos, v3.pos);
+	Vec3 light = Vec3(0, 0, 1.0f);
+	light.norm();
+
+	// Calculate shading for each vertex. We multiply by 'a' here to give
+	// normalised coordinates when multiplying by w0, w1, w2 further down
+	v1.normal.norm();
+	v2.normal.norm();
+	v3.normal.norm();
+
+	float l0 = -Dot(v1.normal, light) * a;
+	float l1 = -Dot(v2.normal, light) * a;
+	float l2 = -Dot(v3.normal, light) * a;
+
+	// Calculate highlights for each vertex
+	Vec3 nz = Vec3(0, 0, -1);
+
+	float r0 = a * ((v1.normal - light) * -2 * (light.dot(v1.normal))).dot(nz);
+	float r1 = a * ((v2.normal - light) * -2 * (light.dot(v2.normal))).dot(nz);
+	float r2 = a * ((v3.normal - light) * -2 * (light.dot(v3.normal))).dot(nz);
+#endif
+
 	for (int y = miny; y < maxy; y++)
 	{
 		for (int x = minx; x < maxx; x++)
@@ -158,6 +261,16 @@ void Raster::drawtriangle(Vertex& v1, Vertex& v2, Vertex& v3, float bright)
 
 				int color = readtexel(u, v);
 
+#ifdef LIGHTING
+
+				float shading = l0 * w0 + l1 * w1 + l2 * w2;
+				shading = 0.9 * shading + (5 * pow(10, -11)) * pow(r0 * w0 / 3 + r1 * w1 / 3 + r2 * w2 / 3, 100);
+
+				// Clip and add ambient light
+				if (shading < 0.08f) shading = 0.08f;
+				if (shading > 1.0f) shading = 1.0f;
+				//bright = fl;
+#endif
 				int r = (int)((float)(UNPACK_R(color)) * bright);
 				int g = (int)((float)(UNPACK_G(color)) * bright);
 				int b = (int)((float)(UNPACK_B(color)) * bright);
@@ -167,6 +280,7 @@ void Raster::drawtriangle(Vertex& v1, Vertex& v2, Vertex& v3, float bright)
 			}
 		}
 	}
+#endif
 }
 
 int Raster::gettexturepixel(int x, int y)
@@ -279,4 +393,36 @@ TEXTURE* Raster::loadtexture(const char* fname)
 	return pTexture;
 }
 
+int Raster::getpoint(int x, int y)
+{
+	if (x > SCREEN_XSIZE || x < 0) return 0;
+	if (y > SCREEN_YSIZE || y < 0) return 0;
+
+	return screenbuffer[(int)x + (int)y * SCREEN_XSIZE];
+}
+
+void Raster::postprocess()
+{
+	for (int y = 0; y < SCREEN_YSIZE-1; y++)
+	{
+		for (int x = 0; x < SCREEN_XSIZE-1; x++)
+		{
+			float r, g, b;
+			int c[2][2];
+
+			c[0][0] = screenbuffer[x + y * SCREEN_XSIZE];
+			c[0][1] = screenbuffer[(x+1) + y * SCREEN_XSIZE];
+			c[1][0] = screenbuffer[x + (y+1) * SCREEN_XSIZE];
+			c[1][1] = screenbuffer[(x+1) + (y+1) * SCREEN_XSIZE];
+
+			r = UNPACK_R(c[0][0]) * 0.25f + UNPACK_R(c[0][1]) * 0.25f + UNPACK_R(c[1][0]) * 0.25f + UNPACK_R(c[1][1]) * 0.25f;
+			g = UNPACK_G(c[0][0]) * 0.25f + UNPACK_G(c[0][1]) * 0.25f + UNPACK_G(c[1][0]) * 0.25f + UNPACK_G(c[1][1]) * 0.25f;
+			b = UNPACK_B(c[0][0]) * 0.25f + UNPACK_B(c[0][1]) * 0.25f + UNPACK_B(c[1][0]) * 0.25f + UNPACK_B(c[1][1]) * 0.25f;
+
+			int color = PACK_RGB((int)r, (int)g, (int)b);
+			screenbuffer[x + y * SCREEN_XSIZE] = color;
+		}
+	}
+
+}
 
