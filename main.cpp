@@ -61,7 +61,7 @@ void InitRenderer()
 	MatrixPerspectiveFovLH(&proj, fov*_DEGREE, aspect, MIN_Z, MAX_Z);
 
 	Identity(&viewport);
-	MatrixSetViewPort(&viewport, 0, 0, SCREEN_XSIZE, SCREEN_YSIZE);
+	MatrixSetViewPort(&viewport, 0, 0, SCREEN_XSIZE, SCREEN_YSIZE, MIN_Z, MAX_Z);
 	
 	screenbuffer = new unsigned int[SCREEN_XSIZE * SCREEN_YSIZE * 4];
 }
@@ -109,19 +109,23 @@ void InitStar()
 
 void RenderStars()
 {
-
+	static float camrot = 0;
 	for (int i = 0; i < NUMOFSTARS; i++)
 	{
 		Vec4 pos;
 
-		//MAT vp;
+		MAT rot;
+		MatrixRotationY(&rot, camrot * _DEGREE);
+		camrot += 0.005f;
+
+		MAT _view = view * rot;
 		MAT final;
-		Multiply(&final, view, proj);
+		Multiply(&final, _view, proj);
 		
 		Multiply(&final, final, viewport);
 		Transform4(&pos, stars[i], final);
 
-		Vec3 out;
+		Vec4 out;
 		PerspectiveDivide(&out, pos);
 
 		//float z = pos.z / pos.w;
