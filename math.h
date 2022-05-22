@@ -3,6 +3,44 @@
 
 #include <algorithm>
 
+struct Vec4
+{
+	float x, y, z, w;
+	Vec4()
+	{
+		x = y = z = w = 0;
+	}
+
+	Vec4(float _x, float _y, float _z, float _w)
+	{
+		x = _x;
+		y = _y;
+		z = _z;
+		w = _w;
+	}
+
+	Vec4 operator-(const Vec4& rhs) const
+	{
+		return Vec4(*this) -= rhs;
+	}
+
+	Vec4& operator-=(const Vec4& rhs)
+	{
+		x -= rhs.x;
+		y -= rhs.y;
+		z -= rhs.z;
+		w = 0;
+		return *this;
+	}
+
+	void norm()
+	{
+		float mag = 1.0f / (float)sqrt(x * x + y * y + z * z);
+		x *= mag;
+		y *= mag;
+		z *= mag;
+	}
+};
 
 struct Vec3
 {
@@ -17,6 +55,13 @@ struct Vec3
 		x = _x;
 		y = _y;
 		z = _z;
+	}
+
+	Vec3(Vec4 &v)
+	{
+		x = v.x;
+		y = v.y;
+		z = v.z;
 	}
 
 	Vec3	operator+(const Vec3& rhs) const
@@ -71,25 +116,21 @@ struct Vec3
 		z /= rhs;
 		return *this;
 	}
-};
 
-struct Vec4
-{
-	float x, y, z, w;
-	Vec4()
+	void norm()
 	{
-		x = y = z = w = 0;
+		float mag = 1.0f / (float)sqrt(x * x + y * y + z * z);
+		x *= mag;
+		y *= mag;
+		z *= mag;
 	}
 
-	Vec4(float _x, float _y, float _z, float _w)
+	float dot(const Vec3& v)
 	{
-		x = _x;
-		y = _y;
-		z = _z;
-		w = _w;
+		return x * v.x + y * v.y + z * v.z;
 	}
-
 };
+
 
 void Subtract(Vec3* out, const Vec3& v1, const Vec3& v2);
 void Normalize(Vec3* vec);
