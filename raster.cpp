@@ -205,27 +205,13 @@ void Raster::drawtriangle(Vertex& v1, Vertex& v2, Vertex& v3, float bright)
 #endif
 
 #ifdef LIGHTING
-
-	float a = 1.0f / edge(v1.pos, v2.pos, v3.pos);
-	Vec3 light = Vec3(0, 0, 1.0f);
+	Vec3 light = Vec3(-10, -3, 3.0f);
 	light.norm();
 
-	// Calculate shading for each vertex. We multiply by 'a' here to give
-	// normalised coordinates when multiplying by w0, w1, w2 further down
 	v1.normal.norm();
 	v2.normal.norm();
 	v3.normal.norm();
 
-	float l0 = -Dot(v1.normal, light) * a;
-	float l1 = -Dot(v2.normal, light) * a;
-	float l2 = -Dot(v3.normal, light) * a;
-
-	// Calculate highlights for each vertex
-	Vec3 nz = Vec3(0, 0, -1);
-
-	float r0 = a * ((v1.normal - light) * -2 * (light.dot(v1.normal))).dot(nz);
-	float r1 = a * ((v2.normal - light) * -2 * (light.dot(v2.normal))).dot(nz);
-	float r2 = a * ((v3.normal - light) * -2 * (light.dot(v3.normal))).dot(nz);
 #endif
 
 	for (int y = miny; y < maxy; y++)
@@ -262,14 +248,16 @@ void Raster::drawtriangle(Vertex& v1, Vertex& v2, Vertex& v3, float bright)
 				int color = readtexel(u, v);
 
 #ifdef LIGHTING
+				float nx = (v1.normal.x * w0 + v2.normal.x * w1 + v3.normal.x * w2) * w;
+				float ny = (v1.normal.y * w0 + v2.normal.y * w1 + v3.normal.y * w2) * w;
+				float nz = (v1.normal.z * w0 + v2.normal.z * w1 + v3.normal.z * w2) * w;
 
-				float shading = l0 * w0 + l1 * w1 + l2 * w2;
-				shading = 0.9 * shading + (5 * pow(10, -11)) * pow(r0 * w0 / 3 + r1 * w1 / 3 + r2 * w2 / 3, 100);
+				Vec3 nn(nx, ny, nz);
+				float shading = -nn.dot(light);
 
-				// Clip and add ambient light
-				if (shading < 0.08f) shading = 0.08f;
-				if (shading > 1.0f) shading = 1.0f;
-				//bright = fl;
+				shading = shading < 0.2f ? 0.2f : shading;
+				shading = shading > 1 ? 1 : shading;
+				bright = shading;
 #endif
 				int r = (int)((float)(UNPACK_R(color)) * bright);
 				int g = (int)((float)(UNPACK_G(color)) * bright);

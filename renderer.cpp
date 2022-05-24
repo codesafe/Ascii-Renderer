@@ -87,20 +87,9 @@ void Renderer::render()
 		v1.uv = model.uv[uv1];
 		v2.uv = model.uv[uv2];
 
-		Vec4 ntemp;
-		v0.normal = model.normal[vn0];
-		Transform4(&ntemp, v0.normal, rot);
-		v0.normal = Vec3(ntemp.x, ntemp.y, ntemp.z);
-
-		v1.normal = model.normal[vn1];
-		Transform4(&ntemp, v1.normal, rot);
-		v1.normal = Vec3(ntemp.x, ntemp.y, ntemp.z);
-
-		v2.normal = model.normal[vn2];
-		Transform4(&ntemp, v2.normal, rot);
-		v2.normal = Vec3(ntemp.x, ntemp.y, ntemp.z);
-
-
+		v0.normal = rot * model.normal[vn0];
+		v1.normal = rot * model.normal[vn1];
+		v2.normal = rot * model.normal[vn2];
 
 		Vec4 temp;
 		Vec3 t1 = rot * model.vertex[_v0];
@@ -116,13 +105,13 @@ void Renderer::render()
 		PerspectiveDivide(&v2.pos, temp);
 
 		float bright = 1;
-		Vec3 light = Vec3(-1, -1, 1.0f);
-		Vec3 facenormal = raster.getfacenormal(t1, t2, t3);
-		float fl = facenormal.dot(light);
-
-		fl = fl < 0 ? 0 : fl;
-		fl = fl > 1 ? 1 : fl;
-		bright = fl;
+// 		Vec3 light = Vec3(-1, -1, 1.0f);
+// 		Vec3 facenormal = raster.getfacenormal(t1, t2, t3);
+// 		float fl = facenormal.dot(light);
+// 
+// 		fl = fl < 0 ? 0 : fl;
+// 		fl = fl > 1 ? 1 : fl;
+// 		bright = fl;
 
 		//raster.drawtriangle(v0, v1, v2);
 		raster.drawtriangle(v2, v1, v0, bright);
