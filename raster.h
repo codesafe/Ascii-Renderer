@@ -11,6 +11,8 @@ private:
 	TEXTURE* texture;
 
 public:
+	bool togglev;
+
 	Raster();
 	~Raster();
 

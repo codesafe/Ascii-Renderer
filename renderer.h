@@ -25,6 +25,7 @@ private:
 	MAT proj;
 	MAT viewport;	// view port
 
+	bool togglev;
 public :
 
 	Renderer();
@@ -35,6 +36,8 @@ public :
 	void init();
 	void clearscreen();
 	void render();
+
+	void toggle();
 
 };
 

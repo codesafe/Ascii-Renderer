@@ -13,6 +13,7 @@
 
 Raster::Raster()
 {
+	togglev = false;
 	screenbuffer = nullptr;
 	zbuffer = nullptr;
 }
@@ -205,7 +206,7 @@ void Raster::drawtriangle(Vertex& v1, Vertex& v2, Vertex& v3, float bright)
 #endif
 
 #ifdef LIGHTING
-	Vec3 light = Vec3(-10, -3, 3.0f);
+	Vec3 light = Vec3(-10, -13, 3.0f);
 	light.norm();
 
 	v1.normal.norm();
@@ -255,8 +256,14 @@ void Raster::drawtriangle(Vertex& v1, Vertex& v2, Vertex& v3, float bright)
 				Vec3 nn(nx, ny, nz);
 				float shading = -nn.dot(light);
 
-				shading = shading < 0.2f ? 0.2f : shading;
-				shading = shading > 1 ? 1 : shading;
+ 				shading = shading < 0 ? 0 : shading;
+ 				shading = shading > 1 ? 1 : shading;
+
+				if (togglev == false)
+				{
+					shading = shading * 0.5f + 0.5f;
+				}
+
 				bright = shading;
 #endif
 				int r = (int)((float)(UNPACK_R(color)) * bright);

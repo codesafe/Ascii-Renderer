@@ -2,7 +2,6 @@
 
 Renderer::Renderer()
 {
-
 }
 Renderer::~Renderer()
 {
@@ -125,3 +124,7 @@ unsigned int* Renderer::getscreenbuffer()
 	return raster.getscreenbuffer();
 }
 
+void Renderer::toggle()
+{
+	raster.togglev = !raster.togglev;
+}

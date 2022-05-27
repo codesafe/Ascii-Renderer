@@ -102,12 +102,16 @@ int main(int argc, char* argv[])
 					case SDLK_RIGHT:
 						break;
 
+					case SDLK_SPACE:
+						break;
+
 					default:
 						break;
 					}
 					break;
 
 				case SDL_KEYUP:
+					renderer.toggle();
 					break;
 
 				default:
