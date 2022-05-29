@@ -147,17 +147,21 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="math.cpp" />
     <ClCompile Include="model.cpp" />
+    <ClCompile Include="pixelshader.cpp" />
     <ClCompile Include="raster.cpp" />
     <ClCompile Include="renderer.cpp" />
+    <ClCompile Include="vertexshader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="asciiraster.h" />
     <ClInclude Include="color.h" />
     <ClInclude Include="math.h" />
     <ClInclude Include="model.h" />
+    <ClInclude Include="pixelshader.h" />
     <ClInclude Include="predef.h" />
     <ClInclude Include="raster.h" />
     <ClInclude Include="renderer.h" />
+    <ClInclude Include="vertexshader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

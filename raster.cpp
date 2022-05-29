@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <memory.h>
+#include <algorithm>
 
 #include "raster.h"
 #include "color.h"
@@ -203,6 +204,15 @@ void Raster::drawtriangle(Light& light, VertexShader& v1, VertexShader& v2, Vert
 	v2.normal.norm();
 	v3.normal.norm();
 
+	Vec view1, view2, view3;
+	view1 = campos - v1.pos;
+	view2 = campos - v2.pos;
+	view3 = campos - v3.pos;
+	view1.norm();
+	view2.norm();
+	view3.norm();
+
+
 	for (int y = miny; y < maxy; y++)
 	{
 		for (int x = minx; x < maxx; x++)
@@ -227,20 +237,44 @@ void Raster::drawtriangle(Light& light, VertexShader& v1, VertexShader& v2, Vert
 				Vec normal = (v1.normal * w1 + v2.normal * w2 + v3.normal * w3) * w;
 				Vec worldpos = (v1.worldpos * w1 + v2.worldpos * w2 + v3.worldpos * w3) * w;
 
-				//https://www.scratchapixel.com/lessons/3d-basic-rendering/phong-shader-BRDF
-				float specularStrength = 0.5;
-
-				Vec viewDir = (campos - worldpos);
+				Vec viewDir = (view1 * w1 + view2 * w2 + view3 * w3) * w;
 				viewDir.norm();
 
-				Vec reflectDir = normal * (light.dir.dot(normal) * 2) - light.dir;
 
+				//https://github.com/FarCaptain/MySoftRenderer/blob/master/Shader.cpp
 
-				//Color finalcolor = ambient + diffuse + specular;
+				float normalDotLight = normal.dot(light.dir);
+				Vec reflectionDir = (normal * 2 * normalDotLight) + light.dir;
+				reflectionDir.norm();
 
+				float diffuse = 1;
+				float ambient = 1;
+				float material_specular = 1;
+				float shininess = 20;
+				float specModulator = std::pow(max(viewDir.dot(reflectionDir), 0.f), shininess);
+				float specular = material_specular * specModulator * (int)(normalDotLight > 0);
 
+				Color directionalLight(1, 1, 1);
+				//float cc = (ambient + diffuse + specular) > 1 ? 1 : (ambient + diffuse + specular);
+				float cc = specular;
 
-				//drawpoint(x, y, z, finalcolor);
+				Color lightColor = directionalLight * cc;
+
+				float shading = -normal.dot(light.dir);
+
+				shading = shading < 0 ? 0 : shading;
+				shading = shading > 1 ? 1 : shading;
+
+				int color = readtexel(u, v);
+				int r = (int)((float)(UNPACK_R(color)) * shading);
+				int g = (int)((float)(UNPACK_G(color)) * shading);
+				int b = (int)((float)(UNPACK_B(color)) * shading);
+
+				color = (r << 24 | g << 16 | b << 8 | 0xff);
+
+				Color finalcolor = Color(color) + lightColor;
+
+				drawpoint(x, y, z, finalcolor);
 			}
 		}
 	}

@@ -71,14 +71,5 @@ struct Light
 	Color color;
 };
 
-// Vertex shader result
-struct VertexShader
-{
-	Vec pos;
-	Vec normal;
-	Vec worldpos;
-	UV uv;
-};
-
 
 #endif
