@@ -12,8 +12,8 @@ public:
 	int facenum;
 	int uvnum;
 
-	Vec3* vertex;
-	Vec3* normal;
+	Vec* vertex;
+	Vec* normal;
 	UV *uv;
 	Face* face;
 

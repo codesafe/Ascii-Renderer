@@ -26,7 +26,7 @@ bool Model::LoadModel(const char* fname)
 
 	// vertex
 	int ret = fscanf(fp, "%d", &vertexnum);
-	vertex = new Vec3[vertexnum];
+	vertex = new Vec[vertexnum];
 	for (i = 0; i < vertexnum; i++)
 		ret = fscanf(fp, "%s %f %f %f", dummy, &vertex[i].x, &vertex[i].y, &vertex[i].z);
 
@@ -38,18 +38,34 @@ bool Model::LoadModel(const char* fname)
 
 	// normal
 	ret = fscanf(fp, "%d", &normalnum);
-	normal = new Vec3[normalnum];
+	normal = new Vec[normalnum];
 	for (i = 0; i < normalnum; i++)
 		ret = fscanf(fp, "%s %f %f %f", dummy, &normal[i].x, &normal[i].y, &normal[i].z);
 
 	ret = fscanf(fp, "%d", &facenum);
 	face = new Face[facenum * 3];
 	for (i = 0; i < facenum * 3; i += 3)
-		fscanf(fp, "%s %d/%d/%d %d/%d/%d %d/%d/%d", 
-			dummy,
-			&face[i + 0].vertex, &face[i + 0].uv, &face[i + 0].normal,
-			&face[i + 1].vertex, &face[i + 1].uv, &face[i + 1].normal,
-			&face[i + 2].vertex, &face[i + 2].uv, &face[i + 2].normal);
+	{
+		int v0, v1, v2;
+		int uv0, uv1, uv2;
+		int n0, n1, n2;
+		fscanf(fp, "%s %d/%d/%d %d/%d/%d %d/%d/%d",
+			dummy, 
+			&v0, &uv0, &n0, &v1, &uv1, &n1, &v2, &uv2, &n2 );
+
+		face[i + 0].vertex = v0 - 1;
+		face[i + 1].vertex = v1 - 1;
+		face[i + 2].vertex = v2 - 1;
+
+		face[i + 0].uv = uv0 - 1;
+		face[i + 1].uv = uv1 - 1;
+		face[i + 2].uv = uv2 - 1;
+
+		face[i + 0].normal = n0 - 1;
+		face[i + 1].normal = n1 - 1;
+		face[i + 2].normal = n2 - 1;
+	}
+
 
 	fclose(fp);
 	return true;

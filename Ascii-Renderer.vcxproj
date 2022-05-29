@@ -152,6 +152,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="asciiraster.h" />
+    <ClInclude Include="color.h" />
     <ClInclude Include="math.h" />
     <ClInclude Include="model.h" />
     <ClInclude Include="predef.h" />

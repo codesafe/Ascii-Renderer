@@ -2,6 +2,7 @@
 #define RASTER_H
 
 #include "predef.h"
+#include "color.h"
 
 class Raster
 {
@@ -10,8 +11,10 @@ private:
 	float* zbuffer;
 	TEXTURE* texture;
 
+
 public:
 	bool togglev;
+	Vec campos;
 
 	Raster();
 	~Raster();
@@ -23,17 +26,17 @@ public:
 	int readtexel(float u, float v);
 	int gettexturepixel(int x, int y);
 
-	float edge(const Vec4& a, const Vec4& b, const Vec4& c);
+	float edge(const Vec& a, const Vec& b, const Vec& c);
 
 	void drawpoint(int x, int y, float z, int color);
 	void drawline(float x1, float y1, float x2, float y2, int color);
 	void drawTriangleOutline(Vertex v0, Vertex v1, Vertex v2, int color);
-	void drawtriangle(Vertex& v1, Vertex& v2, Vertex& v3, float bright);
+	void drawtriangle(Light &light, VertexShader& v1, VertexShader& v2, VertexShader& v3);
 
 	int getpoint(int x, int y);
 	void postprocess();
 
-	Vec3 getfacenormal(Vec3& v0, Vec3& v1, Vec3& v2);
+	Vec getfacenormal(Vec& v0, Vec& v1, Vec& v2);
 
 	TEXTURE* loadtexture(const char* fname);
 };

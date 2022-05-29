@@ -10,10 +10,10 @@ Renderer::~Renderer()
 
 void Renderer::init()
 {
-	light.pos = Vec3(0, 1, 0);
-	light.dir = Vec3(0, 0.5f, 0.5f);
-	Normalize(&light.dir);
-
+	light.pos = Vec(1, 0, -1);
+	light.dir = -light.pos;
+	light.dir.norm();
+	light.color = Color(1, 1, 1);
 
 	raster.init();
 	//model.LoadModel("cube-tex.obj");
@@ -24,12 +24,10 @@ void Renderer::init()
 	float fov = 45.f;
 
 	// Camera
-	Vec3 eye;
-	Vec3 at;
-	Vec3 up;
+	Vec eye, at, up;
 
-	eye.x = 0;	eye.y = 0;	eye.z = -5;
-	at.x = 0;	at.y = 0;	at.z = 1;
+	eye.x = 0;	eye.y = 0.5f;	eye.z = -5;
+	at.x = 0;	at.y = 0.5f;	at.z = 1;
 	up.x = 0;	up.y = 1;	up.z = 0;
 
 	// Init view mat
@@ -43,6 +41,8 @@ void Renderer::init()
 	Identity(&viewport);
 	// 0 ~ 1로 하던가 -1 ~ +1
 	MatrixSetViewPort(&viewport, 0, 0, SCREEN_XSIZE, SCREEN_YSIZE, 0, 1);
+
+	raster.campos = eye;
 
 }
 
@@ -68,19 +68,19 @@ void Renderer::render()
 
 	for (int i = 0; i < model.facenum * 3; i+=3)
 	{
-		int _v0 = model.face[i + 0].vertex - 1;
-		int _v1 = model.face[i + 1].vertex - 1;
-		int _v2 = model.face[i + 2].vertex - 1;
+		int _v0 = model.face[i + 0].vertex;
+		int _v1 = model.face[i + 1].vertex;
+		int _v2 = model.face[i + 2].vertex;
 
-		int vn0 = model.face[i + 0].normal - 1;
-		int vn1 = model.face[i + 1].normal - 1;
-		int vn2 = model.face[i + 2].normal - 1;
+		int vn0 = model.face[i + 0].normal;
+		int vn1 = model.face[i + 1].normal;
+		int vn2 = model.face[i + 2].normal;
 
-		int uv0 = model.face[i + 0].uv - 1;
-		int uv1 = model.face[i + 1].uv - 1;
-		int uv2 = model.face[i + 2].uv - 1;
+		int uv0 = model.face[i + 0].uv;
+		int uv1 = model.face[i + 1].uv;
+		int uv2 = model.face[i + 2].uv;
 
-		Vertex v0, v1, v2;
+		VertexShader v0, v1, v2;
 
 		v0.uv = model.uv[uv0];
 		v1.uv = model.uv[uv1];
@@ -90,30 +90,21 @@ void Renderer::render()
 		v1.normal = rot * model.normal[vn1];
 		v2.normal = rot * model.normal[vn2];
 
-		Vec4 temp;
-		Vec3 t1 = rot * model.vertex[_v0];
-		Transform4(&temp, t1, final);
+		v0.worldpos = rot * model.vertex[_v0];
+		v1.worldpos = rot * model.vertex[_v1];
+		v2.worldpos = rot * model.vertex[_v2];
+
+		Vec temp;
+		Transform(&temp, v0.worldpos, final);
 		PerspectiveDivide(&v0.pos, temp);
 
-		Vec3 t2 = rot * model.vertex[_v1];
-		Transform4(&temp, t2, final);
+		Transform(&temp, v1.worldpos, final);
 		PerspectiveDivide(&v1.pos, temp);
 
-		Vec3 t3 = rot * model.vertex[_v2];
-		Transform4(&temp, t3, final);
+		Transform(&temp, v2.worldpos, final);
 		PerspectiveDivide(&v2.pos, temp);
 
-		float bright = 1;
-// 		Vec3 light = Vec3(-1, -1, 1.0f);
-// 		Vec3 facenormal = raster.getfacenormal(t1, t2, t3);
-// 		float fl = facenormal.dot(light);
-// 
-// 		fl = fl < 0 ? 0 : fl;
-// 		fl = fl > 1 ? 1 : fl;
-// 		bright = fl;
-
-		//raster.drawtriangle(v0, v1, v2);
-		raster.drawtriangle(v2, v1, v0, bright);
+		raster.drawtriangle(light, v2, v1, v0);
 	}
 
 //	raster.postprocess();

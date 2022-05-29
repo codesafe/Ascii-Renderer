@@ -5,13 +5,6 @@
 #include "raster.h"
 #include "model.h"
 
-struct Light
-{
-	Vec3 pos;
-	Vec3 dir;
-};
-
-
 class Renderer
 {
 private:

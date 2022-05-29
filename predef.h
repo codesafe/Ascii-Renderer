@@ -11,7 +11,7 @@
 #define _DEGREE		(3.141592f / 180.0f)
 
 #define SCREEN_XSIZE	640
-#define SCREEN_YSIZE	360
+#define SCREEN_YSIZE	320
 #define MIN_Z		3
 #define MAX_Z		100
 
@@ -50,8 +50,8 @@ struct UV
 
 struct Vertex
 {
-	Vec4 pos;
-	Vec3 normal;
+	Vec pos;
+	Vec normal;
 	UV uv;
 	float rhw;
 };
@@ -61,6 +61,23 @@ struct Face
 	int vertex;
 	int uv;
 	int normal;
+};
+
+#include "color.h"
+struct Light
+{
+	Vec pos;
+	Vec dir;
+	Color color;
+};
+
+// Vertex shader result
+struct VertexShader
+{
+	Vec pos;
+	Vec normal;
+	Vec worldpos;
+	UV uv;
 };
 
 

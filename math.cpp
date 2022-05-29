@@ -1,14 +1,14 @@
 #include <math.h>
 #include "math.h"
 
-void Subtract(Vec3* out, const Vec3& v1, const Vec3& v2)
+void Subtract(Vec* out, const Vec& v1, const Vec& v2)
 {
 	out->x = v1.x - v2.x;
 	out->y = v1.y - v2.y;
 	out->z = v1.z - v2.z;
 }
 
-void Normalize(Vec3* vec)
+void Normalize(Vec* vec)
 {
 	float mag = 1.0f / (float)sqrt(vec->x * vec->x + vec->y * vec->y + vec->z * vec->z);
 	vec->x *= mag;
@@ -16,12 +16,12 @@ void Normalize(Vec3* vec)
 	vec->z *= mag;
 }
 
-float Dot(const Vec3& v1, const Vec3& v2)
+float Dot(const Vec& v1, const Vec& v2)
 {
 	return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
 }
 
-void Cross(Vec3* out, const Vec3& v1, const Vec3& v2)
+void Cross(Vec* out, const Vec& v1, const Vec& v2)
 {
 	out->x = v1.y * v2.z - v1.z * v2.y;
 	out->y = v1.z * v2.x - v1.x * v2.z;
@@ -60,15 +60,7 @@ void Translation(MAT* pOut, float x, float y, float z)
 	pOut->_43 = z;
 }
 
-void Transform(Vec3* pOut, const Vec3& v, const MAT& m)
-{
-	pOut->x = v.x * m._11 + v.y * m._21 + v.z * m._31 + m._41;
-	pOut->y = v.x * m._12 + v.y * m._22 + v.z * m._32 + m._42;
-	pOut->z = v.x * m._13 + v.y * m._23 + v.z * m._33 + m._43;
-
-}
-
-void Transform4(Vec4* pOut, const Vec3& v, const MAT& m)
+void Transform(Vec* pOut, const Vec& v, const MAT& m)
 {
 	pOut->x = v.x * m._11 + v.y * m._21 + v.z * m._31 + m._41;
 	pOut->y = v.x * m._12 + v.y * m._22 + v.z * m._32 + m._42;
@@ -76,6 +68,7 @@ void Transform4(Vec4* pOut, const Vec3& v, const MAT& m)
 	pOut->w = v.x * m._14 + v.y * m._24 + v.z * m._34 + m._44;
 
 }
+
 
 void Multiply(MAT* pOut, const MAT& m1, const MAT& m2)
 {
@@ -101,19 +94,17 @@ void Multiply(MAT* pOut, const MAT& m1, const MAT& m2)
 }
 
 // view
-void MatrixLookAtLH(MAT* out, const Vec3& eye, const Vec3& at, const Vec3& up)
+void MatrixLookAtLH(MAT* out, const Vec& eye, const Vec& at, const Vec& up)
 {
-	Vec3 zaxis; // forward;
+	Vec zaxis; // forward;
 	zaxis = at-eye;
 	Normalize(&zaxis);
 
-	Vec3 _up(0,1,0);
-
-	Vec3 xaxis;// right;
-	Cross(&xaxis, _up, zaxis);
+	Vec xaxis;// right;
+	Cross(&xaxis, up, zaxis);
 	Normalize(&xaxis);
 
-	Vec3 yaxis;//upVector;
+	Vec yaxis;//upVector;
 	Cross(&yaxis, zaxis, xaxis);
 	Normalize(&yaxis);
 
@@ -205,7 +196,7 @@ void MatrixSetViewPort(MAT* out, float x, float y, float w, float h, float minz,
 
 }
 
-void Transform_Homogenize(Vec3 *out, Vec4 &in, float x, float y, float w, float h)
+void Transform_Homogenize(Vec *out, Vec &in, float x, float y, float w, float h)
 {
 	float rhw = 1.0f / in.w;
 	out->x = (in.x * rhw + 1.0f) * (x + w * 0.5f);
@@ -221,7 +212,7 @@ void Transform_Homogenize(Vec3 *out, Vec4 &in, float x, float y, float w, float 
 }
 
 // to ndc
-void PerspectiveDivide(Vec4* out, const Vec4 &in)
+void PerspectiveDivide(Vec* out, const Vec &in)
 {
 	// x = x/w;
 	float rhw = 1 / in.w;
@@ -235,7 +226,7 @@ void MatRotate(MAT* m, float x, float y, float z, float theta)
 {
 	float qsin = (float)sin(theta * 0.5f);
 	float qcos = (float)cos(theta * 0.5f);
-	Vec3 vec(x, y, z);
+	Vec vec(x, y, z);
 
 	float w = qcos;
 	Normalize(&vec);

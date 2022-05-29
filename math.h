@@ -3,15 +3,16 @@
 
 #include <algorithm>
 
-struct Vec4
+struct Vec
 {
 	float x, y, z, w;
-	Vec4()
+	Vec()
 	{
-		x = y = z = w = 0;
+		x = y = z = 0;
+		w = 1;
 	}
 
-	Vec4(float _x, float _y, float _z, float _w)
+	Vec(float _x, float _y, float _z, float _w = 1)
 	{
 		x = _x;
 		y = _y;
@@ -19,73 +20,37 @@ struct Vec4
 		w = _w;
 	}
 
-	Vec4 operator-(const Vec4& rhs) const
+	Vec operator -() const
 	{
-		return Vec4(*this) -= rhs;
+		return Vec(-x, -y, -z, 1.0f);
 	}
 
-	Vec4& operator-=(const Vec4& rhs)
+	Vec	operator+(const Vec& rhs) const
 	{
-		x -= rhs.x;
-		y -= rhs.y;
-		z -= rhs.z;
-		w = 0;
-		return *this;
+		return Vec(*this) += rhs;
 	}
 
-	void norm()
+	Vec operator-(const Vec& rhs) const
 	{
-		float mag = 1.0f / (float)sqrt(x * x + y * y + z * z);
-		x *= mag;
-		y *= mag;
-		z *= mag;
-	}
-};
-
-struct Vec3
-{
-	float x, y, z;
-	Vec3()
-	{
-		x = y = z = 0;
+		return Vec(*this) -= rhs;
 	}
 
-	Vec3(float _x, float _y, float _z)
+	Vec	operator*(const float rhs) const
 	{
-		x = _x;
-		y = _y;
-		z = _z;
+		return Vec(*this) *= rhs;
 	}
 
-	Vec3(Vec4 &v)
+	Vec	operator/(const float rhs) const
 	{
-		x = v.x;
-		y = v.y;
-		z = v.z;
+		return Vec(*this) /= rhs;
 	}
 
-	Vec3	operator+(const Vec3& rhs) const
+	Vec operator *(const Vec& v) const
 	{
-		return Vec3(*this) += rhs;
+		return Vec(x * v.x, y * v.y, z * v.z);
 	}
 
-	Vec3 operator-(const Vec3& rhs) const
-	{
-		return Vec3(*this) -= rhs;
-	}
-
-	Vec3	operator*(const float rhs) const
-	{
-		return Vec3(*this) *= rhs;
-	}
-
-	Vec3	operator/(const float rhs) const
-	{
-		return Vec3(*this) /= rhs;
-	}
-
-
-	Vec3& operator+=(const Vec3& rhs)
+	Vec& operator+=(const Vec& rhs)
 	{
 		x += rhs.x;
 		y += rhs.y;
@@ -93,7 +58,7 @@ struct Vec3
 		return *this;
 	}
 	
-	Vec3& operator-=(const Vec3& rhs)
+	Vec& operator-=(const Vec& rhs)
 	{
 		x -= rhs.x;
 		y -= rhs.y;
@@ -101,7 +66,7 @@ struct Vec3
 		return *this;
 	}
 
-	Vec3& operator*=(const float rhs)
+	Vec& operator*=(const float rhs)
 	{
 		x *= rhs;
 		y *= rhs;
@@ -109,7 +74,7 @@ struct Vec3
 		return *this;
 	}
 
-	Vec3& operator/=(const float rhs)
+	Vec& operator/=(const float rhs)
 	{
 		x /= rhs;
 		y /= rhs;
@@ -125,17 +90,17 @@ struct Vec3
 		z *= mag;
 	}
 
-	float dot(const Vec3& v)
+	float dot(const Vec& v)
 	{
 		return x * v.x + y * v.y + z * v.z;
 	}
 };
 
 
-void Subtract(Vec3* out, const Vec3& v1, const Vec3& v2);
-void Normalize(Vec3* vec);
-float Dot(const Vec3& v1, const Vec3& v2);
-void Cross(Vec3* out, const Vec3& v1, const Vec3& v2);
+void Subtract(Vec* out, const Vec& v1, const Vec& v2);
+void Normalize(Vec* vec);
+float Dot(const Vec& v1, const Vec& v2);
+void Cross(Vec* out, const Vec& v1, const Vec& v2);
 
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -182,9 +147,9 @@ struct MAT
 		return pOut;
 	}
 
-	Vec3 operator*(const Vec3& v)
+	Vec operator*(const Vec& v)
 	{
-		Vec3 out;
+		Vec out;
 		out.x = v.x * _11 + v.y * _21 + v.z * _31 + _41;
 		out.y = v.x * _12 + v.y * _22 + v.z * _32 + _42;
 		out.z = v.x * _13 + v.y * _23 + v.z * _33 + _43;
@@ -194,8 +159,7 @@ struct MAT
 
 void Identity(MAT *m);
 void Translation(MAT* m, float x, float y, float z);
-void Transform(Vec3* out, const Vec3& v, const MAT& m);
-void Transform4(Vec4* out, const Vec3& v, const MAT& m);
+void Transform(Vec* out, const Vec& v, const MAT& m);
 void Multiply(MAT* out, const MAT& m1, const MAT& m2);
 void MatRotate(MAT* m, float x, float y, float z, float theta);
 
@@ -203,13 +167,13 @@ void MatrixRotationX(MAT* pOut, float rad);
 void MatrixRotationY(MAT* pOut, float rad);
 void MatrixRotationZ(MAT* pOut, float rad);
 
-void MatrixLookAtLH(MAT* out, const Vec3& eye, const Vec3& at, const Vec3& up);
+void MatrixLookAtLH(MAT* out, const Vec& eye, const Vec& at, const Vec& up);
 void MatrixPerspectiveFovLH(MAT* out, float fovY, float aspect, float zn, float zf);
 void MatrixPerspectiveFovRH(MAT* out, float fovY, float aspect, float zn, float zf);
 
 void MatrixSetViewPort(MAT* out, float x, float y, float w, float h, float minz, float maxz);
-void Transform_Homogenize(Vec3* out, Vec4& in, float x, float y, float w, float h);
-void PerspectiveDivide(Vec4* out, const Vec4 &in);
+void Transform_Homogenize(Vec* out, Vec& in, float x, float y, float w, float h);
+void PerspectiveDivide(Vec* out, const Vec &in);
 
 
 ////////////////////////////////////////////////////////////////////////////////////
