@@ -3,6 +3,8 @@
 
 #include "predef.h"
 #include "color.h"
+#include "vertexshader.h"
+#include "shader.h"
 
 class Raster
 {
@@ -31,7 +33,7 @@ public:
 	void drawpoint(int x, int y, float z, int color);
 	void drawline(float x1, float y1, float x2, float y2, int color);
 	void drawTriangleOutline(Vertex v0, Vertex v1, Vertex v2, int color);
-	void drawtriangle(Light &light, VertexShader& v1, VertexShader& v2, VertexShader& v3);
+	void drawtriangle(Shader &shader, Vertex& v1, Vertex& v2, Vertex& v3);
 
 	int getpoint(int x, int y);
 	void postprocess();

@@ -13,7 +13,7 @@ public:
 	UV uv;
 
 public :
-	VertexShader(MAT &world, MAT& view, MAT& proj, Vertex &v);
+	VertexShader(MAT& world, MAT& view, MAT& proj, Vec& pos, Vec& nor, UV& uv);
 	~VertexShader();
 
 

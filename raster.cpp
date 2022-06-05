@@ -1,9 +1,10 @@
-#include <windows.h>
+ï»¿#include <windows.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 #include <memory.h>
 #include <algorithm>
+#include <cmath>
 
 #include "raster.h"
 #include "color.h"
@@ -152,8 +153,9 @@ Vec Raster::getfacenormal(Vec& v0, Vec& v1, Vec& v2)
 	return facenormal;
 }
 
+#if 0
 
-void Raster::drawtriangle(Light& light, VertexShader& v1, VertexShader& v2, VertexShader& v3)
+void Raster::drawtriangle(Shader& shader, VertexShader& v1, VertexShader& v2, VertexShader& v3)
 {
 	// back face cull
 	Vec facenormal = getfacenormal(v1.pos, v2.pos, v3.pos);
@@ -169,7 +171,7 @@ void Raster::drawtriangle(Light& light, VertexShader& v1, VertexShader& v2, Vert
 	float x2 = v2.pos.x;
 	float x3 = v3.pos.x;
 
-	// seem Á¦°Å
+	// seem ì œê±°
 	int minx = (int)ceil(min(min(x1, x2) - 0.5f, x3) - 0.5f);
 	int maxx = (int)ceil(max(max(x1, x2) + 0.5f, x3) + 0.5f);
 	int miny = (int)ceil(min(min(y1, y2) - 0.5f, y3) - 0.5f);
@@ -251,7 +253,8 @@ void Raster::drawtriangle(Light& light, VertexShader& v1, VertexShader& v2, Vert
 				float ambient = 1;
 				float material_specular = 1;
 				float shininess = 20;
-				float specModulator = std::pow(max(viewDir.dot(reflectionDir), 0.f), shininess);
+				float specModulator = std::powf(max(viewDir.dot(reflectionDir), 0.f), shininess);
+				specModulator = 1;
 				float specular = material_specular * specModulator * (int)(normalDotLight > 0);
 
 				Color directionalLight(1, 1, 1);
@@ -273,13 +276,126 @@ void Raster::drawtriangle(Light& light, VertexShader& v1, VertexShader& v2, Vert
 				color = (r << 24 | g << 16 | b << 8 | 0xff);
 
 				Color finalcolor = Color(color) + lightColor;
-
+				finalcolor = color;
 				drawpoint(x, y, z, finalcolor);
 			}
 		}
 	}
 
 }
+
+#else
+
+bool checkCVV(const Vec& vec)
+{
+	float w = vec.w;
+	return (vec.x < w&& vec.x > -w && vec.y < w&& vec.y > -w && vec.z > 0 && vec.z < w);
+}
+
+Vec homogenize(const Vec& vec)
+{
+	float rev_w = 1.0f / vec.w;
+	return Vec(
+		(1.f + vec.x * rev_w) * 0.5f * SCREEN_XSIZE,
+		(1.f - vec.y * rev_w) * 0.5f * SCREEN_YSIZE,
+		vec.z * rev_w,
+		1.0f
+	);
+}
+
+static int Round(const float x)
+{
+	return int(x + 0.5f);
+}
+
+static float Min(const float x, const float y, const float z)
+{
+	return min(min(x, y), z);
+}
+
+static float Max(const float x, const float y, const float z)
+{
+	return max(max(x, y), z);
+}
+
+
+void Raster::drawtriangle(Shader& shader, Vertex& _v1, Vertex& _v2, Vertex& _v3)
+{
+	Vertex v1 = shader.vertexShader(_v1);
+	Vertex v2 = shader.vertexShader(_v2);
+	Vertex v3 = shader.vertexShader(_v3);
+
+	Vec p0 = v1.pos;
+	Vec p1 = v2.pos;
+	Vec p2 = v3.pos;
+
+// 	if (!checkCVV(p0)) return;
+// 	if (!checkCVV(p1)) return;
+// 	if (!checkCVV(p2)) return;
+
+		// back face cull
+	Vec facenormal = getfacenormal(v1.pos, v2.pos, v3.pos);
+	Vec t = Vec(0, 0, 1.0f);
+	if (facenormal.dot(t) < 0)
+		return;
+
+
+	float w0 = 1.f / p0.w;
+	float w1 = 1.f / p1.w;
+	float w2 = 1.f / p2.w;
+
+	PerspectiveDivide(&p0, p0);
+	PerspectiveDivide(&p1, p1);
+	PerspectiveDivide(&p2, p2);
+// 	p0 = homogenize(p0);
+// 	p1 = homogenize(p1);
+// 	p2 = homogenize(p2);
+
+	int x0 = Round(Min(p0.x, p1.x, p2.x));
+	int x1 = Round(Max(p0.x, p1.x, p2.x));
+	int y0 = Round(Min(p0.y, p1.y, p2.y));
+	int y1 = Round(Max(p0.y, p1.y, p2.y));
+
+	float f01 = (p0.y - p1.y) * p2.x + (p1.x - p0.x) * p2.y + p0.x * p1.y - p1.x * p0.y;
+	float f20 = (p2.y - p0.y) * p1.x + (p0.x - p2.x) * p1.y + p2.x * p0.y - p0.x * p2.y;
+
+	for (int x = x0; x <= x1; ++x) 
+	{
+		for (int y = y0; y <= y1; ++y) 
+		{
+			float gamma = ((p0.y - p1.y) * x + (p1.x - p0.x) * y + p0.x * p1.y - p1.x * p0.y) / f01;
+			float beta = ((p2.y - p0.y) * x + (p0.x - p2.x) * y + p2.x * p0.y - p0.x * p2.y) / f20;
+			float alpha = 1.f - beta - gamma;
+
+			if (alpha >= 0.f && beta >= 0.f && gamma >= 0.f) 
+			{
+				float zprime = 1.f / (alpha * w0 + beta * w1 + gamma * w2);
+
+				float z = v1.pos.z * w0 + v2.pos.z * w1 + v3.pos.z * w2;
+				float u = (v1.uv.u * w0 + v2.uv.u * w1 + v3.uv.u * w2) * zprime;
+				float v = (v1.uv.v * w0 + v2.uv.v * w1 + v3.uv.v * w2) * zprime;
+				int color = readtexel(u, v);
+				Color C = color;
+				//Color C = (v1.color * alpha * w0 + v2.color * beta * w1 + v3.color * gamma * w2) * zprime;
+				Vec N = (v1.normal * alpha * w0 + v2.normal * beta * w1 + v3.normal * gamma * w2) * zprime;
+				Vec W = (v1.worldpos * alpha * w0 + v2.worldpos * beta * w1 + v3.worldpos * gamma * w2) * zprime;
+
+				shader.setPixel(N, W, C);
+
+				float Ka = 0.3f;
+				Color Kd = shader.light_color;
+				Color Ks = shader.light_color;
+				C = shader.pixelShader(Ka, Kd, Ks);
+
+				drawpoint(x, y, z, (int)C);
+			}
+		}
+	}
+
+}
+
+
+#endif
 
 int Raster::gettexturepixel(int x, int y)
 {

@@ -45,11 +45,6 @@ struct Vec
 		return Vec(*this) /= rhs;
 	}
 
-	Vec operator *(const Vec& v) const
-	{
-		return Vec(x * v.x, y * v.y, z * v.z);
-	}
-
 	Vec& operator+=(const Vec& rhs)
 	{
 		x += rhs.x;
@@ -82,17 +77,26 @@ struct Vec
 		return *this;
 	}
 
-	void norm()
+	Vec& norm()
 	{
 		float mag = 1.0f / (float)sqrt(x * x + y * y + z * z);
 		x *= mag;
 		y *= mag;
 		z *= mag;
+		return *this;
 	}
 
 	float dot(const Vec& v)
 	{
 		return x * v.x + y * v.y + z * v.z;
+	}
+
+	Vec& cross(const Vec& v)
+	{
+		this->x = y * v.z - z * v.y;
+		this->y = z * v.x - x * v.z;
+		this->z = x * v.y - y * v.x;
+		return *this;
 	}
 };
 
@@ -150,9 +154,11 @@ struct MAT
 	Vec operator*(const Vec& v)
 	{
 		Vec out;
-		out.x = v.x * _11 + v.y * _21 + v.z * _31 + _41;
-		out.y = v.x * _12 + v.y * _22 + v.z * _32 + _42;
-		out.z = v.x * _13 + v.y * _23 + v.z * _33 + _43;
+ 		out.x = v.x * _11 + v.y * _21 + v.z * _31 + _41;
+ 		out.y = v.x * _12 + v.y * _22 + v.z * _32 + _42;
+ 		out.z = v.x * _13 + v.y * _23 + v.z * _33 + _43;
+		out.w = v.x * _14 + v.y * _24 + v.z * _34 + _44;
+
 		return out;
 	}
 };

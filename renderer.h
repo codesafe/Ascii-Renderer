@@ -18,6 +18,9 @@ private:
 	MAT proj;
 	MAT viewport;	// view port
 
+
+	Shader shader;
+
 	bool togglev;
 public :
 

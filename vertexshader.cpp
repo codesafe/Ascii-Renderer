@@ -2,14 +2,20 @@
 
 #include "vertexshader.h"
 
-VertexShader::VertexShader(MAT& world, MAT& view, MAT& proj, Vertex& v)
+VertexShader::VertexShader(MAT& world, MAT& view, MAT& proj, Vec& pos, Vec& nor, UV &uv)
 {
 	mvp = world * view * proj;
 
-	Transform(&worldpos, v.pos, world);
-	Transform(&normal, v.normal, world);
-	Transform(&pos, v.pos, mvp);
-	uv = v.uv;
+	worldpos = world * pos;
+	normal = world * nor;
+	this->pos = mvp * pos;
+
+	PerspectiveDivide(&this->pos, this->pos);
+
+	//Transform(&worldpos, pos, world);
+	//Transform(&normal, nor, world);
+	//Transform(&pos, pos, mvp);
+	this->uv = uv;
 }
 
 VertexShader::~VertexShader()

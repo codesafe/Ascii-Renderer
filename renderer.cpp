@@ -30,18 +30,13 @@ void Renderer::init()
 	at.x = 0;	at.y = 0.5f;	at.z = 1;
 	up.x = 0;	up.y = 1;	up.z = 0;
 
-	// Init view mat
-	Identity(&view);
-	MatrixLookAtLH(&view, eye, at, up);
+	shader.setView(eye, at, up);
+	shader.setProjection(fov * _DEGREE, aspect, MIN_Z, MAX_Z);
 
-	// projection mat
-	Identity(&proj);
-	MatrixPerspectiveFovLH(&proj, fov * _DEGREE, aspect, MIN_Z, MAX_Z);
-
-	Identity(&viewport);
-	// 0 ~ 1로 하던가 -1 ~ +1
-	MatrixSetViewPort(&viewport, 0, 0, SCREEN_XSIZE, SCREEN_YSIZE, 0, 1);
-
+// 	Identity(&viewport);
+// 	// 0 ~ 1로 하던가 -1 ~ +1
+// 	MatrixSetViewPort(&viewport, 0, 0, SCREEN_XSIZE, SCREEN_YSIZE, 0, 1);
+	shader.setViewport(0, 0, SCREEN_XSIZE, SCREEN_YSIZE, 0, 1);
 	raster.campos = eye;
 
 }
@@ -55,56 +50,38 @@ void Renderer::render()
 {
 	static float r = 0.0f;
 
-	MAT final = view * proj * viewport;
-
-	MAT rot, rot2;
+	MAT rot;
 	Identity(&rot);
-	Identity(&rot2);
-	MatrixRotationY(&rot, r * _DEGREE);
-	//MatrixRotationX(&rot2, r * _DEGREE * 1.f);
-	rot = rot * rot2;
-	r += 0.5f;
-	//r = 45;
+	//r += 0.5f;
 
 	for (int i = 0; i < model.facenum * 3; i+=3)
 	{
-		int _v0 = model.face[i + 0].vertex;
-		int _v1 = model.face[i + 1].vertex;
-		int _v2 = model.face[i + 2].vertex;
+		int _v1 = model.face[i + 0].vertex;
+		int _v2 = model.face[i + 1].vertex;
+		int _v3 = model.face[i + 2].vertex;
 
-		int vn0 = model.face[i + 0].normal;
-		int vn1 = model.face[i + 1].normal;
-		int vn2 = model.face[i + 2].normal;
+		int vn1 = model.face[i + 0].normal;
+		int vn2 = model.face[i + 1].normal;
+		int vn3 = model.face[i + 2].normal;
 
-		int uv0 = model.face[i + 0].uv;
-		int uv1 = model.face[i + 1].uv;
-		int uv2 = model.face[i + 2].uv;
+		int uv1 = model.face[i + 0].uv;
+		int uv2 = model.face[i + 1].uv;
+		int uv3 = model.face[i + 2].uv;
 
-		VertexShader v0, v1, v2;
+		Vertex v1, v2, v3;
+		v1.pos = model.vertex[_v1];
+		v2.pos = model.vertex[_v2];
+		v3.pos = model.vertex[_v3];
 
-		v0.uv = model.uv[uv0];
-		v1.uv = model.uv[uv1];
-		v2.uv = model.uv[uv2];
-
-		v0.normal = rot * model.normal[vn0];
 		v1.normal = rot * model.normal[vn1];
 		v2.normal = rot * model.normal[vn2];
+		v3.normal = rot * model.normal[vn3];
 
-		v0.worldpos = rot * model.vertex[_v0];
-		v1.worldpos = rot * model.vertex[_v1];
-		v2.worldpos = rot * model.vertex[_v2];
+		v1.uv = model.uv[uv1];
+		v2.uv = model.uv[uv2];
+		v3.uv = model.uv[uv3];
 
-		Vec temp;
-		Transform(&temp, v0.worldpos, final);
-		PerspectiveDivide(&v0.pos, temp);
-
-		Transform(&temp, v1.worldpos, final);
-		PerspectiveDivide(&v1.pos, temp);
-
-		Transform(&temp, v2.worldpos, final);
-		PerspectiveDivide(&v2.pos, temp);
-
-		raster.drawtriangle(light, v2, v1, v0);
+		raster.drawtriangle(shader, v3, v2, v1);
 	}
 
 //	raster.postprocess();
