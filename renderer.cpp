@@ -41,7 +41,7 @@ void Renderer::init()
 
 	Vec lpos = Vec(4, -3, -3.0f);
 #ifdef USE_DRAGON
-	shader.setLight(lpos, Vec(0,0,0), Color(1, 0.5f, 0.4f), 20);
+	shader.setLight(lpos, Vec(0,0,0), Color(1, 0.5f, 0.4f), 512);
 #else
 	shader.setLight(lpos, Vec(0, 0, 0), Color(1, 1, 1), 20);
 #endif

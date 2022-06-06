@@ -83,11 +83,8 @@ Vertex Shader::vertexShader(const Vertex& vtx)
 	return ret;
 }
 
-Vec reflect(Vec& I, Vec& N)
-{
-	return I - ( N * (2.0f * I.dot(N)) );
-}
-
+#define BLINN_PHONG
+// https://www.youtube.com/watch?v=KdDdljGtfeg&ab_channel=BrianWill
 
 Color Shader::pixelShader(const float& Ka, const Color& Kd, const Color& Ks)
 {
@@ -97,18 +94,23 @@ Color Shader::pixelShader(const float& Ka, const Color& Kd, const Color& Ks)
 	// lambert 
 	diffuse = Kd * pixel.color * saturate(-(light.dir.dot(pixel.normal)));
 
+#ifdef BLINN_PHONG
 	Vec view = (camerapos - pixel.world_pos).norm();
 	Vec h = (view - light.dir).norm();
+	specular = Ks * powf(saturate(h.dot(pixel.normal)), shine * 2);
 
-	//specular = Ks * powf( saturate( h.dot(pixel.normal) ), shine);
+#else
+	Vec view = (camerapos - pixel.world_pos).norm();
 
-	Vec ref = reflect(light.dir, pixel.normal);
+	// Reflect Vector : R = 2 * N * ( L dot N ) - L
+	Vec ref = reflect(-light.dir, pixel.normal);
 	ref.norm();
 	specular = Ks * powf(saturate(ref.dot(view)), shine);
 
+#endif
+
 	return ambient + diffuse + specular;
 }
-
 
 void Shader::setPixel(const Vec& _n, const Vec& _w, const Color& _c)
 {

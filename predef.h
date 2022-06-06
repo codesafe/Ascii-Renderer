@@ -10,8 +10,8 @@
 #define	_PI			3.141592f
 #define _DEGREE		(3.141592f / 180.0f)
 
-#define SCREEN_XSIZE	320
-#define SCREEN_YSIZE	(int)( (float)SCREEN_XSIZE * (9.0f/16.0f) )
+#define SCREEN_XSIZE	580
+#define SCREEN_YSIZE	(int)(SCREEN_XSIZE * 0.5625f)
 #define MIN_Z		3
 #define MAX_Z		100
 
@@ -58,6 +58,10 @@ static float saturate(float x)
 	return fminf(1.0f, fmaxf(0.0f, x));
 }
 
+static Vec reflect(Vec L, Vec N)
+{
+	return N * (2.0f * N.dot(L)) - L;
+}
 
 struct TEXTURE
 {
