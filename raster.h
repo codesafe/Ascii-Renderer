@@ -3,7 +3,6 @@
 
 #include "predef.h"
 #include "color.h"
-#include "vertexshader.h"
 #include "shader.h"
 
 class Raster
@@ -16,7 +15,6 @@ private:
 
 public:
 	bool togglev;
-	Vec campos;
 
 	Raster();
 	~Raster();

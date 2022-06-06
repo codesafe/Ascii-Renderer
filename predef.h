@@ -11,7 +11,7 @@
 #define _DEGREE		(3.141592f / 180.0f)
 
 #define SCREEN_XSIZE	640
-#define SCREEN_YSIZE	320
+#define SCREEN_YSIZE	(int)( (float)SCREEN_XSIZE * (9.0f/16.0f) )
 #define MIN_Z		3
 #define MAX_Z		100
 
@@ -37,6 +37,28 @@
 //#define ASCII_RENDER
 //#define ASCII_RENDER_ONLY
 
+
+static int Round(const float x)
+{
+	return int(x + 0.5f);
+}
+
+static float Min(const float x, const float y, const float z)
+{
+	return min(min(x, y), z);
+}
+
+static float Max(const float x, const float y, const float z)
+{
+	return max(max(x, y), z);
+}
+
+static float saturate(float x)
+{
+	return fminf(1.0f, fmaxf(0.0f, x));
+}
+
+
 struct TEXTURE
 {
 	int w, h, pitch;
@@ -48,10 +70,6 @@ struct UV
 	float u, v;
 };
 
-static float saturate(float x)
-{
-	return fminf(1.0f, fmaxf(0.0f, x));
-}
 
 struct Color
 {

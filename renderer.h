@@ -9,8 +9,6 @@ class Renderer
 {
 private:
 
-	Light light;
-
 	Raster raster;
 	Model model;
 

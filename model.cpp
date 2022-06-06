@@ -70,3 +70,21 @@ bool Model::LoadModel(const char* fname)
 	fclose(fp);
 	return true;
 }
+
+Vec Model::GetVertex(int idx)
+{
+	int v = face[idx].vertex;
+	return vertex[v];
+}
+
+Vec Model::GetNormal(int idx)
+{
+	int v = face[idx].normal;
+	return normal[v];
+}
+
+UV Model::GetUV(int idx)
+{
+	int v = face[idx].uv;
+	return uv[v];
+}

@@ -20,20 +20,21 @@ public:
 	MAT projection;
 	MAT viewport;
 
-	Vec Light;
-	Vec Camera;
+	Light light;
+
+	Vec camerapos;
 	Pixel pixel;
-	Color light_color;
+
 	Color specolor;
-	float shine = 1.0f;
+	float shine;
 
 public :
 	Shader();
 	~Shader();
 
-	void setLight(const Vec& L, const Color& C, float _shine);
+	void setLight(const Vec& pos, const Vec& at, const Color& C, float _shine);
 
-	void setWord(const MAT& mat);
+	void setWorld(const MAT& mat);
 	void setView(const Vec& pos, const Vec& at, const Vec& up);
 	void setProjection(float fovy, float aspect, float n, float f);
 	void setViewport(float x, float y, float w, float h, float minz, float maxz);

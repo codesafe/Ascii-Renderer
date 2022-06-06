@@ -31,10 +31,8 @@ void Raster::init()
 {
 	screenbuffer = new unsigned int[SCREEN_XSIZE * SCREEN_YSIZE * 4];
 	zbuffer = new float[SCREEN_XSIZE * SCREEN_YSIZE];
-	texture = loadtexture("texture.bmp");
-
-
-
+	//texture = loadtexture("texture.bmp");
+	texture = loadtexture("gold.bmp");
 }
 
 void Raster::clearscreen()
@@ -153,25 +151,35 @@ Vec Raster::getfacenormal(Vec& v0, Vec& v1, Vec& v2)
 	return facenormal;
 }
 
-#if 0
 
-void Raster::drawtriangle(Shader& shader, VertexShader& v1, VertexShader& v2, VertexShader& v3)
+void Raster::drawtriangle(Shader& shader, Vertex& _v1, Vertex& _v2, Vertex& _v3)
 {
+	Vertex v1 = shader.vertexShader(_v1);
+	Vertex v2 = shader.vertexShader(_v2);
+	Vertex v3 = shader.vertexShader(_v3);
+
+	Vec p1 = v1.pos;
+	Vec p2 = v2.pos;
+	Vec p3 = v3.pos;
+
+	PerspectiveDivide(&p1, p1);
+	PerspectiveDivide(&p2, p2);
+	PerspectiveDivide(&p3, p3);
+
 	// back face cull
-	Vec facenormal = getfacenormal(v1.pos, v2.pos, v3.pos);
+	Vec facenormal = getfacenormal(p1, p2, p3);
 	Vec t = Vec(0, 0, 1.0f);
 	if (facenormal.dot(t) < 0)
 		return;
 
-	float y1 = v1.pos.y;
-	float y2 = v2.pos.y;
-	float y3 = v3.pos.y;
+	float y1 = p1.y;
+	float y2 = p2.y;
+	float y3 = p3.y;
 
-	float x1 = v1.pos.x;
-	float x2 = v2.pos.x;
-	float x3 = v3.pos.x;
+	float x1 = p1.x;
+	float x2 = p2.x;
+	float x3 = p3.x;
 
-	// seem 제거
 	int minx = (int)ceil(min(min(x1, x2) - 0.5f, x3) - 0.5f);
 	int maxx = (int)ceil(max(max(x1, x2) + 0.5f, x3) + 0.5f);
 	int miny = (int)ceil(min(min(y1, y2) - 0.5f, y3) - 0.5f);
@@ -182,220 +190,69 @@ void Raster::drawtriangle(Shader& shader, VertexShader& v1, VertexShader& v2, Ve
 	float minv = min(min(v1.uv.v, v2.uv.v), v3.uv.v);
 	float maxv = max(max(v1.uv.v, v2.uv.v), v3.uv.v);
 
-	float area = edge(v1.pos, v2.pos, v3.pos);
+	float area = edge(p1, p2, p3);
 
 	minx = minx < 0 ? 0 : minx;
 	miny = miny < 0 ? 0 : miny;
 	maxx = maxx > SCREEN_XSIZE ? SCREEN_XSIZE : maxx;
 	maxy = maxy > SCREEN_YSIZE ? SCREEN_YSIZE : maxy;
 
-	v1.uv.u = v1.uv.u / v1.pos.w;
-	v1.uv.v = v1.uv.v / v1.pos.w;
+	v1.uv.u = v1.uv.u / p1.w;
+	v1.uv.v = v1.uv.v / p1.w;
 
-	v2.uv.u = v2.uv.u / v2.pos.w;
-	v2.uv.v = v2.uv.v / v2.pos.w;
+	v2.uv.u = v2.uv.u / p2.w;
+	v2.uv.v = v2.uv.v / p2.w;
 
-	v3.uv.u = v3.uv.u / v3.pos.w;
-	v3.uv.v = v3.uv.v / v3.pos.w;
+	v3.uv.u = v3.uv.u / p3.w;
+	v3.uv.v = v3.uv.v / p3.w;
 
-	v1.pos.w = 1.0f / v1.pos.w;
-	v2.pos.w = 1.0f / v2.pos.w;
-	v3.pos.w = 1.0f / v3.pos.w;
-
-	v1.normal.norm();
-	v2.normal.norm();
-	v3.normal.norm();
-
-	Vec view1, view2, view3;
-	view1 = campos - v1.pos;
-	view2 = campos - v2.pos;
-	view3 = campos - v3.pos;
-	view1.norm();
-	view2.norm();
-	view3.norm();
-
+	float _w1 = 1.0f / p1.w;
+	float _w2 = 1.0f / p2.w;
+	float _w3 = 1.0f / p3.w;
 
 	for (int y = miny; y < maxy; y++)
 	{
 		for (int x = minx; x < maxx; x++)
 		{
 			Vec p((float)x, (float)y, 0, 1);
-			float w1 = edge(v2.pos, v3.pos, p);
-			float w2 = edge(v3.pos, v1.pos, p);
-			float w3 = edge(v1.pos, v2.pos, p);
+			float w0 = edge(p2, p3, p);
+			float w1 = edge(p3, p1, p);
+			float w2 = edge(p1, p2, p);
 
-			if (w1 >= 0 && w2 >= 0 && w3 >= 0)
+			if (w0 >= 0 && w1 >= 0 && w2 >= 0)
 			{
+				w0 /= area;
 				w1 /= area;
 				w2 /= area;
-				w3 /= area;
 
-				float w = 1.0f / (v1.pos.w * w1 + v2.pos.w * w2 + v3.pos.w * w3);
+				float w = 1.0f / (_w1 * w0 + _w2 * w1 + _w3 * w2);
 
-				float u = ( v1.uv.u * w1 + v2.uv.u * w2 + v3.uv.u * w3 ) * w;
-				float v = ( v1.uv.v * w1 + v2.uv.v * w2 + v3.uv.v * w3 ) * w;
-				float z = v1.pos.z * w1 + v2.pos.z * w2 + v3.pos.z * w3;
+				float u = v1.uv.u * w0 + v2.uv.u * w1 + v3.uv.u * w2;
+				float v = v1.uv.v * w0 + v2.uv.v * w1 + v3.uv.v * w2;
+				float z = p1.z * w0 + p2.z * w1 + p3.z * w2;
 
-				Vec normal = (v1.normal * w1 + v2.normal * w2 + v3.normal * w3) * w;
-				Vec worldpos = (v1.worldpos * w1 + v2.worldpos * w2 + v3.worldpos * w3) * w;
-
-				Vec viewDir = (view1 * w1 + view2 * w2 + view3 * w3) * w;
-				viewDir.norm();
-
-
-				//https://github.com/FarCaptain/MySoftRenderer/blob/master/Shader.cpp
-
-				float normalDotLight = normal.dot(light.dir);
-				Vec reflectionDir = (normal * 2 * normalDotLight) + light.dir;
-				reflectionDir.norm();
-
-				float diffuse = 1;
-				float ambient = 1;
-				float material_specular = 1;
-				float shininess = 20;
-				float specModulator = std::powf(max(viewDir.dot(reflectionDir), 0.f), shininess);
-				specModulator = 1;
-				float specular = material_specular * specModulator * (int)(normalDotLight > 0);
-
-				Color directionalLight(1, 1, 1);
-				//float cc = (ambient + diffuse + specular) > 1 ? 1 : (ambient + diffuse + specular);
-				float cc = specular;
-
-				Color lightColor = directionalLight * cc;
-
-				float shading = -normal.dot(light.dir);
-
-				shading = shading < 0 ? 0 : shading;
-				shading = shading > 1 ? 1 : shading;
+				u *= w;
+				v *= w;
 
 				int color = readtexel(u, v);
-				int r = (int)((float)(UNPACK_R(color)) * shading);
-				int g = (int)((float)(UNPACK_G(color)) * shading);
-				int b = (int)((float)(UNPACK_B(color)) * shading);
+				Vec N = (v1.normal * _w1 * w0 + v2.normal * _w2 * w1 + v3.normal * _w3 * w2) * w;
+				N.norm();
+				Vec W = (v1.worldpos * _w1 * w0 + v2.worldpos * _w2 * w1 + v3.worldpos * _w3 * w2) * w;
+				W.norm();
 
-				color = (r << 24 | g << 16 | b << 8 | 0xff);
-
-				Color finalcolor = Color(color) + lightColor;
-				finalcolor = color;
-				drawpoint(x, y, z, finalcolor);
-			}
-		}
-	}
-
-}
-
-#else
-
-bool checkCVV(const Vec& vec)
-{
-	float w = vec.w;
-	return (vec.x < w&& vec.x > -w && vec.y < w&& vec.y > -w && vec.z > 0 && vec.z < w);
-}
-
-Vec homogenize(const Vec& vec)
-{
-	float rev_w = 1.0f / vec.w;
-	return Vec(
-		(1.f + vec.x * rev_w) * 0.5f * SCREEN_XSIZE,
-		(1.f - vec.y * rev_w) * 0.5f * SCREEN_YSIZE,
-		vec.z * rev_w,
-		1.0f
-	);
-}
-
-static int Round(const float x)
-{
-	return int(x + 0.5f);
-}
-
-static float Min(const float x, const float y, const float z)
-{
-	return min(min(x, y), z);
-}
-
-static float Max(const float x, const float y, const float z)
-{
-	return max(max(x, y), z);
-}
-
-
-void Raster::drawtriangle(Shader& shader, Vertex& _v1, Vertex& _v2, Vertex& _v3)
-{
-	Vertex v1 = shader.vertexShader(_v1);
-	Vertex v2 = shader.vertexShader(_v2);
-	Vertex v3 = shader.vertexShader(_v3);
-
-	Vec p0 = v1.pos;
-	Vec p1 = v2.pos;
-	Vec p2 = v3.pos;
-
-// 	if (!checkCVV(p0)) return;
-// 	if (!checkCVV(p1)) return;
-// 	if (!checkCVV(p2)) return;
-
-		// back face cull
-	Vec facenormal = getfacenormal(v1.pos, v2.pos, v3.pos);
-	Vec t = Vec(0, 0, 1.0f);
-	if (facenormal.dot(t) < 0)
-		return;
-
-
-	float w0 = 1.f / p0.w;
-	float w1 = 1.f / p1.w;
-	float w2 = 1.f / p2.w;
-
-	PerspectiveDivide(&p0, p0);
-	PerspectiveDivide(&p1, p1);
-	PerspectiveDivide(&p2, p2);
-// 	p0 = homogenize(p0);
-// 	p1 = homogenize(p1);
-// 	p2 = homogenize(p2);
-
-	int x0 = Round(Min(p0.x, p1.x, p2.x));
-	int x1 = Round(Max(p0.x, p1.x, p2.x));
-	int y0 = Round(Min(p0.y, p1.y, p2.y));
-	int y1 = Round(Max(p0.y, p1.y, p2.y));
-
-	float f01 = (p0.y - p1.y) * p2.x + (p1.x - p0.x) * p2.y + p0.x * p1.y - p1.x * p0.y;
-	float f20 = (p2.y - p0.y) * p1.x + (p0.x - p2.x) * p1.y + p2.x * p0.y - p0.x * p2.y;
-
-	for (int x = x0; x <= x1; ++x) 
-	{
-		for (int y = y0; y <= y1; ++y) 
-		{
-			float gamma = ((p0.y - p1.y) * x + (p1.x - p0.x) * y + p0.x * p1.y - p1.x * p0.y) / f01;
-			float beta = ((p2.y - p0.y) * x + (p0.x - p2.x) * y + p2.x * p0.y - p0.x * p2.y) / f20;
-			float alpha = 1.f - beta - gamma;
-
-			if (alpha >= 0.f && beta >= 0.f && gamma >= 0.f) 
-			{
-				float zprime = 1.f / (alpha * w0 + beta * w1 + gamma * w2);
-
-				float z = v1.pos.z * w0 + v2.pos.z * w1 + v3.pos.z * w2;
-				float u = (v1.uv.u * w0 + v2.uv.u * w1 + v3.uv.u * w2) * zprime;
-				float v = (v1.uv.v * w0 + v2.uv.v * w1 + v3.uv.v * w2) * zprime;
-				int color = readtexel(u, v);
-				Color C = color;
-				//Color C = (v1.color * alpha * w0 + v2.color * beta * w1 + v3.color * gamma * w2) * zprime;
-				Vec N = (v1.normal * alpha * w0 + v2.normal * beta * w1 + v3.normal * gamma * w2) * zprime;
-				Vec W = (v1.worldpos * alpha * w0 + v2.worldpos * beta * w1 + v3.worldpos * gamma * w2) * zprime;
-
-				shader.setPixel(N, W, C);
+				shader.setPixel(N, W, color);
 
 				float Ka = 0.3f;
-				Color Kd = shader.light_color;
-				Color Ks = shader.light_color;
-				C = shader.pixelShader(Ka, Kd, Ks);
+				Color Kd = shader.light.color;
+				Color Ks = shader.light.color;
+				color = shader.pixelShader(Ka, Kd, Ks);
 
-				drawpoint(x, y, z, (int)C);
+				drawpoint(x, y, z, color);
 			}
 		}
 	}
 
 }
-
-
-#endif
 
 int Raster::gettexturepixel(int x, int y)
 {

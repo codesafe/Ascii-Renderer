@@ -4,6 +4,7 @@
 Shader::Shader()
 {
 	Identity(&world);
+	shine = 1;
 }
 
 Shader::~Shader()
@@ -11,14 +12,15 @@ Shader::~Shader()
 
 }
 
-void Shader::setLight(const Vec& L, const Color& C, float _shine)
+void Shader::setLight(const Vec& pos, const Vec& at, const Color& C, float _shine)
 {
-	Light = L;
-	light_color = C;
+	light.pos = pos;
+	light.dir = (at-pos).norm();
+	light.color = C;
 	shine = _shine;
 }
 
-void Shader::setWord(const MAT& mat)
+void Shader::setWorld(const MAT& mat)
 {
 	world = mat;
 }
@@ -27,6 +29,7 @@ void Shader::setView(const Vec& pos, const Vec& at, const Vec& up)
 {
 	Identity(&view);
 	MatrixLookAtLH(&view, pos, at, up);
+	camerapos = pos;
 }
 
 void Shader::setProjection(float fov, float aspect, float n, float f)
@@ -67,24 +70,31 @@ Vertex Shader::vertexShader(const Vertex& vtx)
 {
 	MAT tm = world * view * projection * viewport;
 	Vertex ret;
-	ret.pos = vtx.pos;
-	ret.normal = world * vtx.normal;
-	ret.worldpos = world * ret.pos;
-	ret.pos = tm * ret.pos;
 
+	ret.pos = tm * vtx.pos;
+	ret.normal = world * vtx.normal;
+	ret.normal.norm();
+
+	ret.worldpos = world * vtx.pos;
 	ret.uv = vtx.uv;
+
 	return ret;
 }
 
 
 Color Shader::pixelShader(const float& Ka, const Color& Kd, const Color& Ks)
 {
-	Color shade, ambient, diffuse, specular;
-	ambient = pixel.color * 0.3f;
-	//diffuse = Kd * pixel.color * saturate((-Light) * pixel.normal);
-	Vec View = Camera - pixel.world_pos;
-	Vec H = (View + (-Light)).norm();
-	//specular = Ks * pow(saturate(H * pixel.normal), shine);
+	Color ambient, diffuse, specular;
+	//ambient = pixel.color * 0.3f;
+	ambient = pixel.color * 0.2f;
+
+	diffuse = Kd * pixel.color * saturate((-light.dir).dot(pixel.normal));
+
+	Vec view = camerapos - pixel.world_pos;
+	Vec h = (view - light.dir).norm();
+
+	specular = Ks * powf( saturate( h.dot(pixel.normal) ), shine);
+
 	return ambient + diffuse + specular;
 }
 

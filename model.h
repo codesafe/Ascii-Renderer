@@ -21,6 +21,9 @@ public:
 	~Model();
 
 	bool LoadModel(const char* fname);
+	Vec GetVertex(int idx);
+	Vec GetNormal(int idx);
+	UV GetUV(int idx);
 };
 
 
