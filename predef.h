@@ -10,7 +10,7 @@
 #define	_PI			3.141592f
 #define _DEGREE		(3.141592f / 180.0f)
 
-#define SCREEN_XSIZE	640
+#define SCREEN_XSIZE	320
 #define SCREEN_YSIZE	(int)( (float)SCREEN_XSIZE * (9.0f/16.0f) )
 #define MIN_Z		3
 #define MAX_Z		100

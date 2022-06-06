@@ -20,6 +20,8 @@ public:
 	MAT projection;
 	MAT viewport;
 
+	MAT resultTM;
+
 	Light light;
 
 	Vec camerapos;

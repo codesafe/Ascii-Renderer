@@ -18,8 +18,8 @@ void Renderer::init()
 #ifdef USE_DRAGON
 	model.LoadModel("d.obj");
 #else
-	//model.LoadModel("cube-tex.obj");
-	model.LoadModel("b.obj");
+	model.LoadModel("cube-tex.obj");
+	//model.LoadModel("b.obj");
 #endif
 
 	float aspect = (float)SCREEN_XSIZE / (float)SCREEN_YSIZE;
@@ -40,7 +40,11 @@ void Renderer::init()
 	shader.setViewport(0, 0, SCREEN_XSIZE, SCREEN_YSIZE, 0, 1);
 
 	Vec lpos = Vec(4, -3, -3.0f);
-	shader.setLight(lpos, Vec(0,0,0), Color(1, 0.5f, 0.4f), 400);
+#ifdef USE_DRAGON
+	shader.setLight(lpos, Vec(0,0,0), Color(1, 0.5f, 0.4f), 20);
+#else
+	shader.setLight(lpos, Vec(0, 0, 0), Color(1, 1, 1), 20);
+#endif
 }
 
 void Renderer::clearscreen()

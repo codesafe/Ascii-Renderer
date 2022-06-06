@@ -43,6 +43,8 @@ void Shader::setViewport(float x, float y, float w, float h, float minz, float m
 	Identity(&viewport);
  	// 0 ~ 1로 하던가 -1 ~ +1
 	MatrixSetViewPort(&viewport, 0, 0, SCREEN_XSIZE, SCREEN_YSIZE, 0, 1);
+
+	resultTM = view * projection * viewport;
 }
 
 Vec Shader::wvp(const Vec& vec) 
@@ -68,7 +70,7 @@ Vertex Shader::wvp(const Vertex& vtx)
 
 Vertex Shader::vertexShader(const Vertex& vtx)
 {
-	MAT tm = world * view * projection * viewport;
+	MAT tm = world * resultTM;
 	Vertex ret;
 
 	ret.pos = tm * vtx.pos;
@@ -81,19 +83,28 @@ Vertex Shader::vertexShader(const Vertex& vtx)
 	return ret;
 }
 
+Vec reflect(Vec& I, Vec& N)
+{
+	return I - ( N * (2.0f * I.dot(N)) );
+}
+
 
 Color Shader::pixelShader(const float& Ka, const Color& Kd, const Color& Ks)
 {
 	Color ambient, diffuse, specular;
-	//ambient = pixel.color * 0.3f;
-	ambient = pixel.color * 0.2f;
+	ambient = pixel.color * Ka;
 
-	diffuse = Kd * pixel.color * saturate((-light.dir).dot(pixel.normal));
+	// lambert 
+	diffuse = Kd * pixel.color * saturate(-(light.dir.dot(pixel.normal)));
 
-	Vec view = camerapos - pixel.world_pos;
+	Vec view = (camerapos - pixel.world_pos).norm();
 	Vec h = (view - light.dir).norm();
 
-	specular = Ks * powf( saturate( h.dot(pixel.normal) ), shine);
+	//specular = Ks * powf( saturate( h.dot(pixel.normal) ), shine);
+
+	Vec ref = reflect(light.dir, pixel.normal);
+	ref.norm();
+	specular = Ks * powf(saturate(ref.dot(view)), shine);
 
 	return ambient + diffuse + specular;
 }

@@ -206,9 +206,9 @@ void Raster::drawtriangle(Shader& shader, Vertex& _v1, Vertex& _v2, Vertex& _v3)
 	v3.uv.u = v3.uv.u / p3.w;
 	v3.uv.v = v3.uv.v / p3.w;
 
-	float _w1 = 1.0f / p1.w;
-	float _w2 = 1.0f / p2.w;
-	float _w3 = 1.0f / p3.w;
+	float rhw1 = 1.0f / p1.w;
+	float rhw2 = 1.0f / p2.w;
+	float rhw3 = 1.0f / p3.w;
 
 	for (int y = miny; y < maxy; y++)
 	{
@@ -225,7 +225,7 @@ void Raster::drawtriangle(Shader& shader, Vertex& _v1, Vertex& _v2, Vertex& _v3)
 				w1 /= area;
 				w2 /= area;
 
-				float w = 1.0f / (_w1 * w0 + _w2 * w1 + _w3 * w2);
+				float w = 1.0f / (rhw1 * w0 + rhw2 * w1 + rhw3 * w2);
 
 				float u = v1.uv.u * w0 + v2.uv.u * w1 + v3.uv.u * w2;
 				float v = v1.uv.v * w0 + v2.uv.v * w1 + v3.uv.v * w2;
@@ -235,10 +235,10 @@ void Raster::drawtriangle(Shader& shader, Vertex& _v1, Vertex& _v2, Vertex& _v3)
 				v *= w;
 
 				int color = readtexel(u, v);
-				Vec N = (v1.normal * _w1 * w0 + v2.normal * _w2 * w1 + v3.normal * _w3 * w2) * w;
+				Vec N = (v1.normal * rhw1 * w0 + v2.normal * rhw2 * w1 + v3.normal * rhw3 * w2) * w;
 				N.norm();
-				Vec W = (v1.worldpos * _w1 * w0 + v2.worldpos * _w2 * w1 + v3.worldpos * _w3 * w2) * w;
-				W.norm();
+				Vec W = (v1.worldpos * rhw1 * w0 + v2.worldpos * rhw2 * w1 + v3.worldpos * rhw3 * w2) * w;
+				//W.norm();
 
 				shader.setPixel(N, W, color);
 
